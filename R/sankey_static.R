@@ -1,31 +1,38 @@
-#' Plot a cost-effectiveness Sankey diagram
+#' Plot a step-package Sankey diagram
 #'
-#' Build a Sankey diagram from cost-effectiveness outputs using either
+#' Build a Sankey diagram from summarised step package data using either
 #' `networkD3` or `ggsankey`.
 #'
-#' @param df Data frame containing cost-effectiveness outputs.
-#' @param cost_col Name of the cost column.
-#' @param effect_col Name of the effect column (unused, kept for future use).
-#' @param group_cols Ordered character vector of grouping column names.
+#' @param df Data frame containing step package summaries.
+#' @param step_col Name of the step column.
+#' @param package_col Name of the package column.
+#' @param n_col Name of the count column.
+#' @param group_cols Ordered character vector of additional grouping columns.
 #' @param engine Rendering engine: either "networkD3" or "ggsankey".
 #'
 #' @return An `htmlwidget` (networkD3) or `ggplot` (ggsankey) object.
 #' @export
-plot_ce_sankey <- function(df,
-                           cost_col,
-                           effect_col,
-                           group_cols,
-                           engine = c("networkD3", "ggsankey")) {
+plot_step_sankey <- function(df,
+                             step_col = "step",
+                             package_col = "package",
+                             n_col = "n",
+                             group_cols = character(),
+                             engine = c("networkD3", "ggsankey")) {
   engine <- match.arg(engine)
-  check_ce_data(df, cost_col, effect_col, group_cols)
+  check_step_data(df, step_col, package_col, n_col, "prop", group_cols)
+
+  all_cols <- c(group_cols, step_col, package_col)
+  if (length(all_cols) < 2) {
+    stop("`group_cols` must define a sequence including step and package.", call. = FALSE)
+  }
 
   if (engine == "networkD3") {
-    links_list <- lapply(seq_len(length(group_cols) - 1), function(i) {
-      dplyr::group_by(df, .data[[group_cols[i]]], .data[[group_cols[i + 1]]]) %>%
-        dplyr::summarise(value = sum(.data[[cost_col]]), .groups = "drop") %>%
+    links_list <- lapply(seq_len(length(all_cols) - 1), function(i) {
+      dplyr::group_by(df, .data[[all_cols[i]]], .data[[all_cols[i + 1]]]) %>%
+        dplyr::summarise(value = sum(.data[[n_col]]), .groups = "drop") %>%
         dplyr::mutate(
-          source = paste(group_cols[i], .data[[group_cols[i]]], sep = ": "),
-          target = paste(group_cols[i + 1], .data[[group_cols[i + 1]]], sep = ": ")
+          source = paste(all_cols[i], .data[[all_cols[i]]], sep = ": "),
+          target = paste(all_cols[i + 1], .data[[all_cols[i + 1]]], sep = ": ")
         ) %>%
         dplyr::select(source, target, value)
     })
@@ -44,7 +51,7 @@ plot_ce_sankey <- function(df,
       NodeID = "name"
     )
   } else {
-    long_df <- ggsankey::make_long(df, !!!rlang::syms(group_cols), value = !!rlang::sym(cost_col))
+    long_df <- ggsankey::make_long(df, !!!rlang::syms(all_cols), value = !!rlang::sym(n_col))
     ggplot2::ggplot(
       long_df,
       ggplot2::aes(

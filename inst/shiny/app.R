@@ -1,7 +1,8 @@
 opts <- getOption("currentsee.app")
 df <- opts$df
-cost_col <- opts$cost_col
-effect_col <- opts$effect_col
+step_col <- opts$step_col
+package_col <- opts$package_col
+n_col <- opts$n_col
 group_cols <- opts$group_cols
 
 library(shiny)
@@ -10,7 +11,7 @@ library(tidyr)
 library(networkD3)
 
 ui <- fluidPage(
-  titlePanel("Cost-effectiveness Sankey"),
+  titlePanel("Step-package Sankey"),
   sidebarLayout(
     sidebarPanel(
       lapply(group_cols, function(gc) {
@@ -41,10 +42,11 @@ server <- function(input, output, session) {
   })
 
   output$sankey <- networkD3::renderSankeyNetwork({
-    currentsee::plot_ce_sankey(
+    currentsee::plot_step_sankey(
       filtered(),
-      cost_col = cost_col,
-      effect_col = effect_col,
+      step_col = step_col,
+      package_col = package_col,
+      n_col = n_col,
       group_cols = group_cols,
       engine = "networkD3"
     )

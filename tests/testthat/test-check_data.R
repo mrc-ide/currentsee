@@ -1,5 +1,5 @@
-test_that("check_ce_data validates columns", {
-  df <- data.frame(cost = 1, effect = 1, grp = "a")
-  expect_silent(check_ce_data(df, "cost", "effect", "grp"))
-  expect_error(check_ce_data(df, "cost", "effect", "missing"), "Missing columns")
+test_that("check_step_data validates columns", {
+  df <- data.frame(step = 1, package = "A", n = 1, prop = 1, grp = "a")
+  expect_silent(check_step_data(df, group_cols = "grp"))
+  expect_error(check_step_data(df, group_cols = "missing"), "Missing columns")
 })
