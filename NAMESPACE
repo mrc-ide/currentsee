@@ -3,3 +3,5 @@
 export(check_ce_data)
 export(launch_ce_app)
 export(plot_ce_sankey)
+export(simulate_step_data)
+export(summarise_step_packages)
