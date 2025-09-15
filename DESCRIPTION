@@ -14,8 +14,6 @@ Imports:
     dplyr,
     tidyr,
     networkD3,
-    ggsankey,
-    ggplot2,
     shiny,
     rlang
 Suggests:
