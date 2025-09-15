@@ -2,6 +2,7 @@
 
 export(check_step_data)
 export(launch_step_app)
+export(build_step_sankey_inputs)
 export(plot_step_sankey)
 export(simulate_step_data)
 export(summarise_step_packages)

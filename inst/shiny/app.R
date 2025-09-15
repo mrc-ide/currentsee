@@ -2,7 +2,6 @@ opts <- getOption("currentsee.app")
 df <- opts$df
 step_col <- opts$step_col
 package_col <- opts$package_col
-n_col <- opts$n_col
 group_cols <- opts$group_cols
 
 library(shiny)
@@ -46,9 +45,7 @@ server <- function(input, output, session) {
       filtered(),
       step_col = step_col,
       package_col = package_col,
-      n_col = n_col,
-      group_cols = group_cols,
-      engine = "networkD3"
+      group_cols = group_cols
     )
   })
 }
