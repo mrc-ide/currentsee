@@ -1,12 +1,14 @@
 test_that("plot_step_sankey returns networkD3 widget", {
-  df <- data.frame(grp = "G", step = c(-1, -1), package = c("A", "B"), n = c(1, 2), prop = c(1/3, 2/3))
-  p <- plot_step_sankey(df, group_cols = "grp", engine = "networkD3")
+  set.seed(1)
+  df <- simulate_step_data(n = 2, pfpr = "low", seasonality = "low")
+  p <- plot_step_sankey(df, group_cols = c("pfpr", "seasonality"), id_col = "id", engine = "networkD3")
   expect_s3_class(p, "htmlwidget")
 })
 
 test_that("plot_step_sankey returns ggplot", {
   skip_if_not_installed("ggsankey")
-  df <- data.frame(grp = "G", step = c(-1, -1), package = c("A", "B"), n = c(1, 2), prop = c(1/3, 2/3))
-  p <- plot_step_sankey(df, group_cols = "grp", engine = "ggsankey")
+  set.seed(1)
+  df <- simulate_step_data(n = 2, pfpr = "low", seasonality = "low")
+  p <- plot_step_sankey(df, group_cols = c("pfpr", "seasonality"), id_col = "id", engine = "ggsankey")
   expect_s3_class(p, "ggplot")
 })
