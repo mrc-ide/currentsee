@@ -1,0 +1,107 @@
+---
+title: "Getting started with currentsee"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with currentsee}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Welcome
+
+The **currentsee** package simulates transitions between malaria intervention
+packages and renders them as richly annotated Sankey diagrams. This vignette
+takes you from simulation to interactive exploration so you can explore the
+full workflow in just a few lines of code.
+
+If you're working on the development version of the package, you can load it
+with:
+
+```{r load-all, eval = FALSE}
+devtools::load_all()
+```
+
+For package users the usual library call works:
+
+```{r setup}
+library(currentsee)
+library(dplyr)
+```
+
+## 1. Simulate transitions
+
+We begin by simulating a set of intervention trajectories. Each simulation
+starts from a "current" package configuration and stochastically removes and
+adds interventions until all candidates have been explored.
+
+```{r simulate}
+set.seed(1)
+df <- simulate(100) |>
+  mutate(
+    season = sample(c("perennial", "seasonal"), 1),
+    .by = "id"
+  )
+
+dplyr::glimpse(df)
+```
+
+The resulting tibble records every step in each trajectory, including the
+package string and which intervention changed.
+
+## 2. Build Sankey inputs
+
+Next we convert the raw simulation into the node and link structures required
+by `networkD3::sankeyNetwork()`.
+
+```{r build}
+nodes <- make_nodes(df)
+links <- make_links(df, nodes)
+colours <- make_colours(nodes$id)
+
+head(nodes)
+head(dplyr::filter(links, !is.na(next_package)))
+```
+
+Nodes represent unique package combinations, while links count how often we
+move from one combination to the next. Tooltips are automatically generated to
+summarise which interventions were added or removed.
+
+## 3. Create a static Sankey diagram
+
+With the inputs prepared we can render an interactive Sankey diagram directly
+in the RStudio viewer or an HTML document.
+
+```{r sankey, eval = FALSE}
+makes_sankey(nodes, links, colours)
+```
+
+The widget honours the colour palette produced by `make_colours()` and includes
+rich tooltips describing each transition.
+
+## 4. Launch the exploration Shiny app
+
+To explore the same data with filtering controls, launch the bundled Shiny app.
+This opens in your default browser and allows you to subset the trajectories by
+any grouping columns you provide.
+
+```{r shiny, eval = FALSE}
+launch_step_app(df, group_cols = "season")
+```
+
+The app keeps the same Sankey rendering but adds dropdown selectors for the
+`season` column, letting you compare perennial and seasonal pathways side by
+side.
+
+## Wrap-up
+
+That's all you need to go from stochastic simulations to interactive Sankey
+visualisations with **currentsee**. Experiment with alternative weights and
+baseline packages to see how the flows evolve, and build on the Shiny app to
+create bespoke decision-support tools.
