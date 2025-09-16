@@ -69,7 +69,7 @@ summarise which interventions were added or removed.
 With the inputs prepared we can render an interactive Sankey diagram directly
 in the RStudio viewer or an HTML document.
 
-```{r sankey, fig.width=8}
+```{r sankey, fig.width=40}
 make_sankey(nodes, links, colours)
 ```
 
