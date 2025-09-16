@@ -158,37 +158,48 @@ make_sankey <- function(
     nodes,
     links,
     colours,
-    font_size = 14,                 # px
+    node_width = 30,
+    font_size = 14,                 # px -> passed to sankeyNetwork(fontSize=)
     link_alpha = 0.35,              # 0..1 (used if value_scaled_alpha = FALSE)
     value_scaled_alpha = FALSE,     # if TRUE, alpha scaled by link value
     alpha_range = c(0.2, 0.8),      # used when value_scaled_alpha = TRUE
-    node_width = 30,              # NULL = leave as-is, or numeric px e.g. 30
     split_newlines = TRUE,          # turn '\n' in labels into stacked <tspan> lines
     center_labels = TRUE,           # horizontally centre labels on each node
     place_labels_above = FALSE,     # if TRUE, nudge text above node
-    label_y_offset = -6             # px shift when placing above
+    label_y_offset = -6,            # px shift when placing above
+    sinks_right = TRUE,              # passed to sankeyNetwork(sinksRight=)
+    width = 1200,
+    height = 700
 ) {
   stopifnot(length(alpha_range) == 2)
 
+  # Use the exact same filtered order for both the widget and the tooltips we attach
+  links_filtered <- dplyr::filter(links, !is.na(.data$next_package))
+
   sn <- networkD3::sankeyNetwork(
-    Links  = dplyr::filter(links, !is.na(.data$next_package)),
-    Nodes  = nodes,
-    Source = "source",
-    Target = "target",
-    Value  = "value",
-    NodeID = "node_name",
-    NodeGroup = "id",
-    LinkGroup = "id",
+    Links       = links_filtered,
+    Nodes       = nodes,
+    Source      = "source",
+    Target      = "target",
+    Value       = "value",
+    NodeID      = "node_name",
+    NodeGroup   = "id",
+    LinkGroup   = "id",
+    units       = "",
     colourScale = colours,
-    width = 1200,
-    height = 700
+    fontSize    = font_size,
+    nodeWidth   = node_width,
+    sinksRight = sinks_right,
+    height = height,
+    width = width
   )
 
-  sn$x$links$tooltip <- dplyr::filter(links, !is.na(.data$next_package))$tooltip
-
+  # Expose tooltips to JS (parallel to Links order)
+  if (!is.null(links_filtered$tooltip)) {
+    sn$x$links$tooltip <- links_filtered$tooltip
+  }
 
   js_bool <- function(x) if (isTRUE(x)) "true" else "false"
-  js_num_or_null <- function(x) if (is.null(x)) "null" else as.character(x)
 
   js <- sprintf('
 function(el, x) {
@@ -211,12 +222,6 @@ function(el, x) {
     });
   }
 
-  function setNodeWidth() {
-    var desired = %s; // null or number
-    if (desired === null) return;
-    d3.select(el).selectAll(".node rect").attr("width", desired);
-  }
-
   function recenterLabels() {
     var firstRect = d3.select(el).select(".node rect");
     if (firstRect.empty()) return;
@@ -234,8 +239,6 @@ function(el, x) {
     if (%s) {
       texts.attr("y", %d);
     }
-
-    texts.style("font-size", "%dpx");
   }
 
   function setLinkOpacity() {
@@ -259,31 +262,30 @@ function(el, x) {
   }
 
   function setTooltips() {
-    // Replace default <title> on links
     var linkSel = d3.select(el).selectAll(".link");
+    var tooltips = (x && x.links) ? x.links.map(function(l){ return l.tooltip; }) : null;
+
     linkSel.select("title").remove();
     linkSel.append("title")
-      .text(function(d){
-        // If tooltip property exists, use it
+      .text(function(d,i){
         if (typeof d.tooltip !== "undefined" && d.tooltip !== null) return d.tooltip;
+        if (tooltips && tooltips[i]) return tooltips[i];
         var fmt = (d3.format ? d3.format(",.0f") : function(x){return x;});
         var src = d.source && d.source.name ? d.source.name : "";
         var tgt = d.target && d.target.name ? d.target.name : "";
-        return src + " \u2192 " + tgt + "\\n" + fmt(+d.value);
+        return src + " \\u2192 " + tgt + "\\n" + fmt(+d.value);
       });
   }
 
   // First pass
   var texts = d3.select(el).selectAll(".node text");
   applyLineBreaks(texts);
-  setNodeWidth();
   recenterLabels();
   setLinkOpacity();
   setTooltips();
 
   // Second pass after layout to resist widget re-positioning
   requestAnimationFrame(function(){
-    setNodeWidth();
     recenterLabels();
     setLinkOpacity();
     setTooltips();
@@ -291,10 +293,8 @@ function(el, x) {
 }
 ',
 js_bool(split_newlines),
-js_num_or_null(node_width),
 js_bool(center_labels),
 js_bool(place_labels_above), as.integer(label_y_offset),
-as.integer(font_size),
 js_bool(value_scaled_alpha),
 as.numeric(link_alpha),
 as.numeric(alpha_range[1]), as.numeric(alpha_range[2]),
