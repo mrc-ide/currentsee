@@ -30,9 +30,7 @@ library(dplyr)
 
 ## 1. Simulate transitions
 
-We begin by simulating a set of intervention trajectories. Each simulation
-starts from a "current" package configuration and stochastically removes and
-adds interventions until all candidates have been explored.
+We begin by simulating our data and adding a mock grouping variable "seasonality"
 
 ```{r simulate}
 set.seed(1)
@@ -45,7 +43,7 @@ df <- simulate(100) |>
 dplyr::glimpse(df)
 ```
 
-The resulting tibble records every step in each trajectory, including the
+The resulting data.frame records every step in each trajectory, including the
 package string and which intervention changed.
 
 ## 2. Build Sankey inputs
@@ -58,8 +56,8 @@ nodes <- make_nodes(df)
 links <- make_links(df, nodes)
 colours <- make_colours(nodes$id)
 
-head(nodes)
-head(dplyr::filter(links, !is.na(next_package)))
+glimpse(nodes)
+glimpse(links)
 ```
 
 Nodes represent unique package combinations, while links count how often we
@@ -71,7 +69,7 @@ summarise which interventions were added or removed.
 With the inputs prepared we can render an interactive Sankey diagram directly
 in the RStudio viewer or an HTML document.
 
-```{r sankey, eval = FALSE}
+```{r sankey, fig.width=8}
 make_sankey(nodes, links, colours)
 ```
 
@@ -91,10 +89,3 @@ launch_step_app(df, group_cols = "season")
 The app keeps the same Sankey rendering but adds dropdown selectors for the
 `season` column, letting you compare perennial and seasonal pathways side by
 side.
-
-## Wrap-up
-
-That's all you need to go from stochastic simulations to interactive Sankey
-visualisations with **currentsee**. Experiment with alternative weights and
-baseline packages to see how the flows evolve, and build on the Shiny app to
-create bespoke decision-support tools.
