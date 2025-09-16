@@ -43,11 +43,6 @@ make_nodes <- function(x) {
 #' @return A tibble describing links between nodes including `source`,
 #'   `target`, and tooltip metadata.
 #'
-#' @examples
-#' df <- simulate(3)
-#' nodes <- make_nodes(df)
-#' make_links(df, nodes)
-#'
 #' @export
 make_links <- function(x, nodes = make_nodes(x)) {
   required_cols <- c("id", "step", "package")
@@ -70,7 +65,7 @@ make_links <- function(x, nodes = make_nodes(x)) {
       next_step = dplyr::lead(.data$step)
     ) |>
     dplyr::ungroup() |>
-    dplyr::group_by(dplyr::across(c(package, next_package, step))) |>
+    dplyr::group_by(dplyr::across(c(.data$package, .data$next_package, .data$step))) |>
     dplyr::summarise(value = dplyr::n(), .groups = "drop") |>
     dplyr::mutate(
       source = match(.data$package, node_lookup) - 1L,
@@ -92,8 +87,9 @@ make_links <- function(x, nodes = make_nodes(x)) {
       )
     ) |>
     dplyr::mutate(
-      tooltip = paste0("→: add ", .data$change, "\n←: remove ", .data$change)
-    )
+      tooltip = paste0("\u2192: add ", .data$change, "\n\u2190: remove ", .data$change)
+    ) |>
+    as.data.frame()
 }
 
 #' Create a D3 colour scale for Sankey nodes
@@ -103,12 +99,6 @@ make_links <- function(x, nodes = make_nodes(x)) {
 #'
 #' @return A JavaScript expression defining a D3 ordinal scale that maps nodes
 #'   to pastel colours.
-#'
-#' @examples
-#' df <- simulate(3)
-#' nodes <- make_nodes(df)
-#' make_colours(nodes$id)
-#'
 #' @export
 make_colours <- function(id) {
   pal <- c(
@@ -161,18 +151,10 @@ make_colours <- function(id) {
 #' @param label_y_offset Vertical offset (in pixels) used when moving labels
 #'   above the node.
 #'
-#' @return An [htmlwidgets::htmlwidget] object produced by
+#' @return An htmlwidgets object produced by
 #'   [networkD3::sankeyNetwork()].
-#'
-#' @examples
-#' df <- simulate(5)
-#' nodes <- make_nodes(df)
-#' links <- make_links(df, nodes)
-#' colours <- make_colours(nodes$id)
-#' makes_sankey(nodes, links, colours)
-#'
 #' @export
-makes_sankey <- function(
+make_sankey <- function(
     nodes,
     links,
     colours,
@@ -189,7 +171,7 @@ makes_sankey <- function(
   stopifnot(length(alpha_range) == 2)
 
   sn <- networkD3::sankeyNetwork(
-    Links  = dplyr::filter(links, !is.na(next_package)),
+    Links  = dplyr::filter(links, !is.na(.data$next_package)),
     Nodes  = nodes,
     Source = "source",
     Target = "target",
@@ -200,7 +182,7 @@ makes_sankey <- function(
     colourScale = colours
   )
 
-  sn$x$links$tooltip <- dplyr::filter(links, !is.na(next_package))$tooltip
+  sn$x$links$tooltip <- dplyr::filter(links, !is.na(.data$next_package))$tooltip
 
 
   js_bool <- function(x) if (isTRUE(x)) "true" else "false"
@@ -282,11 +264,10 @@ function(el, x) {
       .text(function(d){
         // If tooltip property exists, use it
         if (typeof d.tooltip !== "undefined" && d.tooltip !== null) return d.tooltip;
-        // Fallback: source → target + value
         var fmt = (d3.format ? d3.format(",.0f") : function(x){return x;});
         var src = d.source && d.source.name ? d.source.name : "";
         var tgt = d.target && d.target.name ? d.target.name : "";
-        return src + " → " + tgt + "\\n" + fmt(+d.value);
+        return src + " \u2192 " + tgt + "\\n" + fmt(+d.value);
       });
   }
 

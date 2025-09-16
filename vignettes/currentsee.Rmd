@@ -21,13 +21,6 @@ packages and renders them as richly annotated Sankey diagrams. This vignette
 takes you from simulation to interactive exploration so you can explore the
 full workflow in just a few lines of code.
 
-If you're working on the development version of the package, you can load it
-with:
-
-```{r load-all, eval = FALSE}
-devtools::load_all()
-```
-
 For package users the usual library call works:
 
 ```{r setup}
@@ -79,7 +72,7 @@ With the inputs prepared we can render an interactive Sankey diagram directly
 in the RStudio viewer or an HTML document.
 
 ```{r sankey, eval = FALSE}
-makes_sankey(nodes, links, colours)
+make_sankey(nodes, links, colours)
 ```
 
 The widget honours the colour palette produced by `make_colours()` and includes

@@ -1,9 +1,11 @@
 Package: currentsee
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
-Authors@R:
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Title: Sankey diagrams for malaria CE analysis
+Version: 0.0.1
+Authors@R: c(
+    person("Pete", "Winskill", email = "p.winskill@imperial.ac.uk", role = c("aut", "cre"))
+    )
+Description: Visualisation (statically or via an RShiny app) of Sankey diagram
+  malaria intervention prioritisation/deprioritisation pathways.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -13,12 +15,14 @@ BugReports: https://github.com/mrc-ide/currentsee/issues
 Imports:
     dplyr,
     htmlwidgets,
-    tidyr,
     networkD3,
     purrr,
     shiny,
     rlang,
     jsonlite
 Suggests:
+    knitr,
+    qpdf,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+VignetteBuilder: knitr

@@ -46,7 +46,7 @@ server <- function(input, output, session) {
   })
 
   output$sankey <- networkD3::renderSankeyNetwork({
-    currentsee::makes_sankey(
+    currentsee::make_sankey(
       filtered()$nodes,
       filtered()$links,
       filtered()$colours

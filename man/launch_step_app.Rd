@@ -7,22 +7,23 @@
 launch_step_app(df, group_cols = character())
 }
 \arguments{
-\item{df}{Data frame containing step package summaries.}
+\item{df}{Data frame containing at least \code{id}, \code{step}, and \code{package}
+columns describing transitions.}
 
-\item{group_cols}{Character vector of grouping column names.}
-
-\item{step_col}{Name of the step column.}
-
-\item{package_col}{Name of the package column.}
-
-\item{n_col}{Name of the count column.}
-
-\item{prop_col}{Name of the proportion column.}
+\item{group_cols}{Optional character vector of column names that should be
+exposed as filters in the sidebar.}
 }
 \value{
-No return value; launches a Shiny application.
+No return value; the function launches a Shiny application.
 }
 \description{
-Start a Shiny app that allows interactive exploration of step-package
-Sankey diagrams.
+Start a Shiny application that allows interactive exploration of simulated
+step-package Sankey diagrams.
+}
+\examples{
+if (interactive()) {
+  df <- simulate(20)
+  launch_step_app(df)
+}
+
 }

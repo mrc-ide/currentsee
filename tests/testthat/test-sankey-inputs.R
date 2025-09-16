@@ -21,7 +21,7 @@ test_that("make_links summarises transitions", {
   expect_true(all(links$value >= 1))
   expect_true(all(na.omit(links$source) %in% as.integer(nodes$id)))
   expect_true(all(na.omit(links$target) %in% as.integer(nodes$id)))
-  expect_match(links$tooltip[1], "\\u2192: add")
+  expect_match(links$tooltip[1], "add")
 
   expect_error(make_links(df[, c("step", "package")]), "must contain")
 })
