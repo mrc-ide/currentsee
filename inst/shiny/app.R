@@ -1,7 +1,5 @@
 opts <- getOption("currentsee.app")
 df <- opts$df
-step_col <- opts$step_col
-package_col <- opts$package_col
 group_cols <- opts$group_cols
 
 library(shiny)
@@ -37,15 +35,21 @@ server <- function(input, output, session) {
         d <- d[d[[gc]] == val, , drop = FALSE]
       }
     }
-    d
+    nodes <- make_nodes(d)
+    links <- make_links(d)
+    colours <- make_colours(nodes$id)
+    return(list(
+      nodes = nodes,
+      links = links,
+      colours = colours
+    ))
   })
 
   output$sankey <- networkD3::renderSankeyNetwork({
-    currentsee::plot_step_sankey(
-      filtered(),
-      step_col = step_col,
-      package_col = package_col,
-      group_cols = group_cols
+    currentsee::makes_sankey(
+      filtered()$nodes,
+      filtered()$links,
+      filtered()$colours
     )
   })
 }

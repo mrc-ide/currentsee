@@ -1,130 +1,85 @@
-sim <- function(id = NULL, int = c("cm", "itn", "smc", "vx"), current = c("cm", "itn"), weights = c(itn = 0.6, smc = 0.4, vx = 0.2)){
-  out <- data.frame(
-    step = 0,
-    package = paste(current, collapse = ", "),
-    changed = NA
-  )
-
-  package <- current
-  i <- -1
-  while(length(package) > 1){
-    opts <- setdiff(package, "cm")
-    down <- sample(opts, 1, prob = 1 - weights[opts])
-    package <- setdiff(package, down)
-    package <- package[order(match(package, int))]
-    out_add <- data.frame(
-      step = i,
-      package =  paste(package, collapse = ", "),
-      changed = down
-    )
-    out <- rbind(out, out_add)
-    i <- i-1
-  }
-
-  package <- current
-  i <- 1
-  while(length(package) < length(int)){
-    opts <- setdiff(int, package)
-    up <- sample(opts, 1, prob = weights[opts])
-    package <- factor(c(as.character(package), up), levels = int)
-    package <- package[order(match(package, int))]
-    out_add <- data.frame(
-      step = i,
-      package =  paste(package, collapse = ", "),
-      changed = up
-    )
-    out <- rbind(out, out_add)
-    i <- i+1
-  }
-
-  out$id <- id
-  out <- out[order(out$step),]
-
-  return(out)
+#' @export
+make_nodes <- function(x){
+  # nodes
+  nodes <- data.frame(name = sort(unique(x$package)))
+  nodes$node_name <- sapply(nodes$name, function(x){
+    gsub(", ", "\n",x)
+  })
+  nodes$id <- paste(0:(nrow(nodes) - 1))
+  return(nodes)
 }
 
-df <- lapply(1:100, function(x){
-  sim(x)
-}) |>
-  dplyr::bind_rows()
-
-
-# nodes
-nodes <- data.frame(name = sort(unique(df$package)))
-nodes$node_name <- sapply(nodes$name, function(x){
-  gsub(", ", "\n",x)
-})
-nodes$id <- paste(0:(nrow(nodes) - 1))
-
-# build consecutive - and valid - links
-links <- df |>
-  dplyr::arrange(id, step) |>
-  dplyr::mutate(next_package = dplyr::lead(package),
-                next_step    = dplyr::lead(step),
-                .by = "id") |>
-  dplyr::count(package, next_package, step, name = "value") |>
-  dplyr::mutate(
-    source = match(package, nodes$name) - 1L,
-    target = match(next_package, nodes$name) - 1L,
-    label = gsub(", ", "\n", package),
-    id = paste(source)
-  ) |>
-  dplyr::mutate(
-    change = purrr::map2_chr(
-      strsplit(package, ",\\s*"),
-      strsplit(next_package, ",\\s*"),
-      ~ {
-        if (any(is.na(.y))) return(NA_character_)
-        new <- setdiff(.y, .x)
-        paste(new, collapse = ", ")
-      }
+#' @export
+make_links <- function(x){
+  links <- x |>
+    dplyr::arrange(id, step) |>
+    dplyr::mutate(
+      next_package = dplyr::lead(package),
+      next_step    = dplyr::lead(step),
+      .by = "id"
+    ) |>
+    dplyr::count(package, next_package, step, name = "value") |>
+    dplyr::mutate(
+      source = match(package, nodes$name) - 1L,
+      target = match(next_package, nodes$name) - 1L,
+      label = gsub(", ", "\n", package),
+      id = paste(source)
+    ) |>
+    dplyr::mutate(
+      change = purrr::map2_chr(
+        strsplit(package, ",\\s*"),
+        strsplit(next_package, ",\\s*"),
+        ~ {
+          if (any(is.na(.y))) return(NA_character_)
+          new <- setdiff(.y, .x)
+          paste(new, collapse = ", ")
+        }
+      )
+    ) |>
+    dplyr::mutate(
+      tooltip = paste("→: add ", change, "\n←: remove ", change, sep = "")
     )
-  ) |>
-  dplyr::mutate(
-    tooltip = paste("→: add ", change, "\n←: remove ", change, sep = "")
+  return(links)
+}
+
+#' @export
+make_colours <- function(id){
+  pal <- c(
+    "#AEC6CF", # pastel blue
+    "#FFB347", # pastel orange
+    "#77DD77", # pastel green
+    "#FF6961", # pastel red/coral
+    "#CBAACB", # pastel lilac
+    "#F49AC2", # pastel pink
+    "#FFD1DC", # very pale rose
+    "#B5EAD7", # pastel mint
+    "#FFFACD", # pastel lemon
+    "#ADD8E6", # soft sky blue
+    "#E0BBE4", # pastel lavender
+    "#F7CAC9", # blush pink
+    "#BFD8B8"  # pastel sage green
   )
 
-dom <- nodes$id
+  # Build a D3 ordinal scale string
+  colourScale <- sprintf(
+    'd3.scaleOrdinal().domain(%s).range(%s)',
+    jsonlite::toJSON(id, auto_unbox = TRUE),
+    jsonlite::toJSON(pal[seq_along(id)], auto_unbox = TRUE)
+  )
 
-pal <- c(
-  "#AEC6CF", # pastel blue
-  "#FFB347", # pastel orange
-  "#77DD77", # pastel green
-  "#FF6961", # pastel red
-  "#CBAACB", # pastel purple/lilac
-  "#F49AC2", # pastel pink
-  "#FFD1DC", # very pale rose
-  "#B5EAD7"  # pastel mint
-)
+  return(colourScale)
+}
 
-# Build a D3 ordinal scale string
-colourScale <- sprintf(
-  'd3.scaleOrdinal().domain(%s).range(%s)',
-  jsonlite::toJSON(dom, auto_unbox = TRUE),
-  jsonlite::toJSON(pal[seq_along(dom)], auto_unbox = TRUE)
-)
-
-sn <- networkD3::sankeyNetwork(
-  Links  = dplyr::filter(links, !is.na(next_package)),
-  Nodes  = nodes,
-  Source = "source",
-  Target = "target",
-  Value  = "value",
-  NodeID = "node_name", # Node label
-  NodeGroup = "id",
-  LinkGroup = "id",
-  colourScale = colourScale
-)
-
-sn$x$links$tooltip <- dplyr::filter(links, !is.na(next_package))$tooltip
-
-style_sankey_networkD3 <- function(
-    sn,
+#' @export
+makes_sankey <- function(
+    nodes,
+    links,
+    colours,
     font_size = 14,                 # px
     link_alpha = 0.35,              # 0..1 (used if value_scaled_alpha = FALSE)
     value_scaled_alpha = FALSE,     # if TRUE, alpha scaled by link value
     alpha_range = c(0.2, 0.8),      # used when value_scaled_alpha = TRUE
-    node_width = NULL,              # NULL = leave as-is, or numeric px e.g. 30
+    node_width = 30,              # NULL = leave as-is, or numeric px e.g. 30
     split_newlines = TRUE,          # turn '\n' in labels into stacked <tspan> lines
     center_labels = TRUE,           # horizontally centre labels on each node
     place_labels_above = FALSE,     # if TRUE, nudge text above node
@@ -138,10 +93,10 @@ style_sankey_networkD3 <- function(
     Source = "source",
     Target = "target",
     Value  = "value",
-    NodeID = "node_name", # Node label
+    NodeID = "node_name",
     NodeGroup = "id",
     LinkGroup = "id",
-    colourScale = colourScale
+    colourScale = colours
   )
 
   sn$x$links$tooltip <- dplyr::filter(links, !is.na(next_package))$tooltip
@@ -264,46 +219,3 @@ as.numeric(link_alpha)
 
   htmlwidgets::onRender(sn, js)
 }
-
-
-style_sankey_networkD3(sn, node_width = 30)
-
-
-
-
-
-
-
-
-
-
-
-# GGplot version
-library(ggplot2)
-library(ggsankey)
-
-labels <- min(links$step):max(links$step)
-labels[labels == 0] <- "Current"
-
-ggplot(links,
-       aes(
-         x = step,
-         next_x = step + 1,
-         node = package,
-         next_node = next_package,
-         fill = factor(package),
-         value = value,
-         label = label
-       )
-) +
-  geom_sankey(flow.alpha = 0.4, width = 0.2) +
-  geom_sankey_text(size = 5, color = "black") +
-  scale_x_continuous(labels = labels, name = "") +
-  theme_minimal() +
-  theme(
-    axis.text.y = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    legend.position = "none",
-    axis.text.x = element_text(colour = "black")
-  )

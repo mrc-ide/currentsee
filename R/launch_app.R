@@ -13,19 +13,10 @@
 #' @return No return value; launches a Shiny application.
 #' @export
 launch_step_app <- function(df,
-                             step_col = "step",
-                             package_col = "package",
-                             n_col = "n",
-                             prop_col = "prop",
-                             group_cols = character()) {
-  check_step_data(df, step_col, package_col, n_col, prop_col, group_cols)
-
+                            group_cols = character()
+) {
   opts <- list(
     df = df,
-    step_col = step_col,
-    package_col = package_col,
-    n_col = n_col,
-    prop_col = prop_col,
     group_cols = group_cols
   )
   old <- options(currentsee.app = opts)

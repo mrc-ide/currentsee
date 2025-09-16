@@ -4,17 +4,12 @@
 \alias{launch_step_app}
 \title{Launch the interactive step-package Sankey application}
 \usage{
-launch_step_app(
-  df,
-  step_col = "step",
-  package_col = "package",
-  n_col = "n",
-  prop_col = "prop",
-  group_cols = character()
-)
+launch_step_app(df, group_cols = character())
 }
 \arguments{
 \item{df}{Data frame containing step package summaries.}
+
+\item{group_cols}{Character vector of grouping column names.}
 
 \item{step_col}{Name of the step column.}
 
@@ -23,8 +18,6 @@ launch_step_app(
 \item{n_col}{Name of the count column.}
 
 \item{prop_col}{Name of the proportion column.}
-
-\item{group_cols}{Character vector of grouping column names.}
 }
 \value{
 No return value; launches a Shiny application.
