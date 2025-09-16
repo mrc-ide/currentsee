@@ -36,7 +36,7 @@ server <- function(input, output, session) {
       }
     }
     nodes <- make_nodes(d)
-    links <- make_links(d)
+    links <- make_links(d, nodes)
     colours <- make_colours(nodes$id)
     return(list(
       nodes = nodes,
