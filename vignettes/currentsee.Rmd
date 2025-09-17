@@ -26,7 +26,6 @@ For package users the usual library call works:
 ```{r setup}
 library(currentsee)
 library(dplyr)
-library(htmltools)
 ```
 
 ## 1. Simulate transitions
@@ -71,12 +70,8 @@ With the inputs prepared we can render an interactive Sankey diagram directly
 in the RStudio viewer or an HTML document.
 
 ```{r sankey, fig.width=40}
+make_sankey(nodes, links, colours)
 
-htmltools::browsable(
-  htmltools::div(style = "width: 100%;", make_sankey(nodes, links, colours))
-)
-        
-                 
 ```
 
 The widget honours the colour palette produced by `make_colours()` and includes

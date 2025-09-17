@@ -30,6 +30,21 @@ make_nodes <- function(x) {
 
   nodes$id <- as.character(seq_len(nrow(nodes)) - 1L)
 
+  prop <-  x |>
+    dplyr::summarise(
+      n = dplyr::n(),
+      .by = c("step", "package")
+    ) |>
+    dplyr::mutate(
+      p = paste0(round(100 * .data$n / sum(.data$n), 1), "%"),
+      .by = c("step")
+    ) |>
+    dplyr::rename("name" = "package") |>
+    dplyr::select("name", "p")
+
+  nodes <- nodes |>
+    dplyr::left_join(prop, by = "name")
+
   nodes
 }
 
@@ -58,15 +73,16 @@ make_links <- function(x, nodes = make_nodes(x)) {
   node_lookup <- nodes$name
 
   x |>
-    dplyr::arrange(.data$id, .data$step) |>
-    dplyr::group_by(.data$id) |>
+    dplyr::arrange("id", "step") |>
     dplyr::mutate(
       next_package = dplyr::lead(.data$package),
-      next_step = dplyr::lead(.data$step)
+      next_step = dplyr::lead(.data$step),
+      .by = "id"
     ) |>
-    dplyr::ungroup() |>
-    dplyr::group_by(dplyr::across(c(.data$package, .data$next_package, .data$step))) |>
-    dplyr::summarise(value = dplyr::n(), .groups = "drop") |>
+    dplyr::summarise(
+      value = dplyr::n(),
+      .by = c("package", "next_package", "step")
+    ) |>
     dplyr::mutate(
       source = match(.data$package, node_lookup) - 1L,
       target = match(.data$next_package, node_lookup) - 1L,
@@ -88,6 +104,10 @@ make_links <- function(x, nodes = make_nodes(x)) {
     ) |>
     dplyr::mutate(
       tooltip = paste0("\u2192: add ", .data$change, "\n\u2190: remove ", .data$change)
+    ) |>
+    dplyr::mutate(
+      p = paste0(round(100 * .data$value / sum(.data$value), 1), "%"),
+      .by = "step"
     ) |>
     as.data.frame()
 }
@@ -158,48 +178,35 @@ make_sankey <- function(
     nodes,
     links,
     colours,
-    node_width = 30,
-    font_size = 14,                 # px -> passed to sankeyNetwork(fontSize=)
+    font_size = 14,                 # px
     link_alpha = 0.35,              # 0..1 (used if value_scaled_alpha = FALSE)
     value_scaled_alpha = FALSE,     # if TRUE, alpha scaled by link value
     alpha_range = c(0.2, 0.8),      # used when value_scaled_alpha = TRUE
+    node_width = 30,                # NULL = leave as-is, or numeric px e.g. 30
     split_newlines = TRUE,          # turn '\n' in labels into stacked <tspan> lines
     center_labels = TRUE,           # horizontally centre labels on each node
     place_labels_above = FALSE,     # if TRUE, nudge text above node
-    label_y_offset = -6,            # px shift when placing above
-    sinks_right = TRUE,              # passed to sankeyNetwork(sinksRight=)
-    width = 1200,
-    height = 700
+    label_y_offset = -6             # px shift when placing above
 ) {
   stopifnot(length(alpha_range) == 2)
 
-  # Use the exact same filtered order for both the widget and the tooltips we attach
-  links_filtered <- dplyr::filter(links, !is.na(.data$next_package))
-
   sn <- networkD3::sankeyNetwork(
-    Links       = links_filtered,
-    Nodes       = nodes,
-    Source      = "source",
-    Target      = "target",
-    Value       = "value",
-    NodeID      = "node_name",
-    NodeGroup   = "id",
-    LinkGroup   = "id",
-    units       = "",
-    colourScale = colours,
-    fontSize    = font_size,
-    nodeWidth   = node_width,
-    sinksRight = sinks_right,
-    height = height,
-    width = width
+    Links  = dplyr::filter(links, !is.na(.data$next_package)),
+    Nodes  = nodes,
+    Source = "source",
+    Target = "target",
+    Value  = "value",
+    NodeID = "node_name",
+    NodeGroup = "id",
+    LinkGroup = "id",
+    colourScale = colours
   )
 
-  # Expose tooltips to JS (parallel to Links order)
-  if (!is.null(links_filtered$tooltip)) {
-    sn$x$links$tooltip <- links_filtered$tooltip
-  }
+  sn$x$links$tooltip <- dplyr::filter(links, !is.na(.data$next_package))$tooltip
+  sn$x$nodes$p <- nodes$p  # <-- your node-level tooltip text
 
   js_bool <- function(x) if (isTRUE(x)) "true" else "false"
+  js_num_or_null <- function(x) if (is.null(x)) "null" else as.character(x)
 
   js <- sprintf('
 function(el, x) {
@@ -222,6 +229,12 @@ function(el, x) {
     });
   }
 
+  function setNodeWidth() {
+    var desired = %s; // null or number
+    if (desired === null) return;
+    d3.select(el).selectAll(".node rect").attr("width", desired);
+  }
+
   function recenterLabels() {
     var firstRect = d3.select(el).select(".node rect");
     if (firstRect.empty()) return;
@@ -239,6 +252,8 @@ function(el, x) {
     if (%s) {
       texts.attr("y", %d);
     }
+
+    texts.style("font-size", "%dpx");
   }
 
   function setLinkOpacity() {
@@ -261,15 +276,12 @@ function(el, x) {
     }
   }
 
-  function setTooltips() {
+  function setLinkTooltips() {
     var linkSel = d3.select(el).selectAll(".link");
-    var tooltips = (x && x.links) ? x.links.map(function(l){ return l.tooltip; }) : null;
-
     linkSel.select("title").remove();
     linkSel.append("title")
-      .text(function(d,i){
+      .text(function(d){
         if (typeof d.tooltip !== "undefined" && d.tooltip !== null) return d.tooltip;
-        if (tooltips && tooltips[i]) return tooltips[i];
         var fmt = (d3.format ? d3.format(",.0f") : function(x){return x;});
         var src = d.source && d.source.name ? d.source.name : "";
         var tgt = d.target && d.target.name ? d.target.name : "";
@@ -277,24 +289,50 @@ function(el, x) {
       });
   }
 
-  // First pass
-  var texts = d3.select(el).selectAll(".node text");
-  applyLineBreaks(texts);
-  recenterLabels();
-  setLinkOpacity();
-  setTooltips();
+  // NEW: Node titles from x.nodes[*].p, aligned by d.index
+  function setNodeTooltipsFromNodesP() {
+    var nodesSel = d3.select(el).selectAll(".node");
 
-  // Second pass after layout to resist widget re-positioning
-  requestAnimationFrame(function(){
+    // Remove any default titles (which show name + value)
+    nodesSel.selectAll("title").remove();
+    nodesSel.selectAll("rect title").remove();
+
+    nodesSel.selectAll("rect").each(function(d){
+      var p = "";
+      if (d && typeof d.index !== "undefined" && x.nodes && x.nodes[d.index]) {
+        var v = x.nodes[d.index].p;
+        if (v !== null && typeof v !== "undefined") p = String(v);
+      } else if (d && typeof d.p !== "undefined" && d.p !== null) {
+        // fallback in case the sankey lib copied the field onto d
+        p = String(d.p);
+      }
+      d3.select(this).append("title").text(p);
+    });
+  }
+
+  function applyAll() {
+    var texts = d3.select(el).selectAll(".node text");
+    applyLineBreaks(texts);
+    setNodeWidth();
     recenterLabels();
     setLinkOpacity();
-    setTooltips();
-  });
+    setLinkTooltips();
+    setNodeTooltipsFromNodesP();   // <-- apply node p-tooltips
+  }
+
+  // First pass
+  applyAll();
+
+  // Ensure persistence after layout/transition
+  requestAnimationFrame(applyAll);
+  setTimeout(applyAll, 80);
 }
 ',
 js_bool(split_newlines),
+js_num_or_null(node_width),
 js_bool(center_labels),
 js_bool(place_labels_above), as.integer(label_y_offset),
+as.integer(font_size),
 js_bool(value_scaled_alpha),
 as.numeric(link_alpha),
 as.numeric(alpha_range[1]), as.numeric(alpha_range[2]),
