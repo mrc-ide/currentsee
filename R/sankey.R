@@ -204,9 +204,9 @@ make_sankey <- function(
   )
 
   sizingPolicy = htmlwidgets::sizingPolicy(
-    browser.fill   = FALSE,  # use container width, not window width
-    browser.padding = 0,     # no extra padding that shoves it right
-    knitr.figure   = FALSE,  # ignore fig.width/height (they don't help for widgets)
+    knitr.figure   = TRUE,   # <- honour chunk fig.width/fig.height
+    browser.fill   = FALSE,  # <- don't try to fill the whole window
+    padding        = 0,
     viewer.suppress = TRUE
   )
 
