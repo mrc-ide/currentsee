@@ -324,6 +324,9 @@ function(el, x) {
   // First pass
   applyAll();
 
+  var svg = el.querySelector("svg");
+  if (svg) svg.removeAttribute("viewBox");
+
   // Ensure persistence after layout/transition
   requestAnimationFrame(applyAll);
   setTimeout(applyAll, 80);
