@@ -199,7 +199,8 @@ make_sankey <- function(
     NodeID = "node_name",
     NodeGroup = "id",
     LinkGroup = "id",
-    colourScale = colours
+    colourScale = colours,
+    width = "100%"
   )
 
   sn$x$links$tooltip <- dplyr::filter(links, !is.na(.data$next_package))$tooltip
