@@ -203,6 +203,13 @@ make_sankey <- function(
     width = "100%"
   )
 
+  sizingPolicy = htmlwidgets::sizingPolicy(
+    browser.fill   = FALSE,  # use container width, not window width
+    browser.padding = 0,     # no extra padding that shoves it right
+    knitr.figure   = FALSE,  # ignore fig.width/height (they don't help for widgets)
+    viewer.suppress = TRUE
+  )
+
   sn$x$links$tooltip <- dplyr::filter(links, !is.na(.data$next_package))$tooltip
   sn$x$nodes$p <- nodes$p  # <-- your node-level tooltip text
 
