@@ -1,9 +1,6 @@
 ---
 title: "Getting started with currentsee"
 output: rmarkdown::html_vignette
-template:
-  assets:
-    - inst/pkgdown/extra.css
 vignette: >
   %\VignetteIndexEntry{Getting started with currentsee}
   %\VignetteEngine{knitr::rmarkdown}
@@ -72,7 +69,7 @@ summarise which interventions were added or removed.
 With the inputs prepared we can render an interactive Sankey diagram directly
 in the RStudio viewer or an HTML document.
 
-```{r sankey, fig.width=36, fig.height=18, out.width='100%'}
+```{r sankey, out.width='100%'}
 make_sankey(nodes, links, colours)
 
 ```

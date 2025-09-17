@@ -203,15 +203,8 @@ make_sankey <- function(
     width = "100%"
   )
 
-  sizingPolicy = htmlwidgets::sizingPolicy(
-    knitr.figure   = TRUE,   # <- honour chunk fig.width/fig.height
-    browser.fill   = FALSE,  # <- don't try to fill the whole window
-    padding        = 0,
-    viewer.suppress = TRUE
-  )
-
   sn$x$links$tooltip <- dplyr::filter(links, !is.na(.data$next_package))$tooltip
-  sn$x$nodes$p <- nodes$p  # <-- your node-level tooltip text
+  sn$x$nodes$p <- nodes$p
 
   js_bool <- function(x) if (isTRUE(x)) "true" else "false"
   js_num_or_null <- function(x) if (is.null(x)) "null" else as.character(x)
