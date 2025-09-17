@@ -1,6 +1,9 @@
 ---
 title: "Getting started with currentsee"
 output: rmarkdown::html_vignette
+template:
+  assets:
+    - inst/pkgdown/extra.css
 vignette: >
   %\VignetteIndexEntry{Getting started with currentsee}
   %\VignetteEngine{knitr::rmarkdown}
