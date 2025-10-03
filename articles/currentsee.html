@@ -67,32 +67,16 @@ Sankey diagrams. This vignette takes you from simulation to interactive
 exploration so you can explore the full workflow in just a few lines of
 code.</p>
 <p>For package users the usual library call works:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/mrc-ide/currentsee" class="external-link">currentsee</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'currentsee'</span></span>
-<span><span class="co">#&gt; The following object is masked from 'package:stats':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     simulate</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'dplyr'</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:stats':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     filter, lag</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     intersect, setdiff, setequal, union</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="simulate-transitions">1. Simulate transitions<a class="anchor" aria-label="anchor" href="#simulate-transitions"></a>
 </h2>
 <p>We begin by simulating our data and adding a mock grouping variable
 “seasonality”</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simulate.html">simulate</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>  <span class="fu">mutate</span><span class="op">(</span></span>
 <span>    season <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"perennial"</span>, <span class="st">"seasonal"</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span>,</span>
 <span>    .by <span class="op">=</span> <span class="st">"id"</span></span>
 <span>  <span class="op">)</span></span>
@@ -105,6 +89,25 @@ code.</p>
 <span><span class="co">#&gt; $ changed <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "itn"<span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span>"irs"<span style="color: #949494;">, </span>"smc"<span style="color: #949494;">, </span>"vx"<span style="color: #949494;">, </span>"itn"<span style="color: #949494;">, </span><span style="color: #BB0000;">NA</span><span style="color: #949494;">, </span>"vx"<span style="color: #949494;">, </span>"smc"<span style="color: #949494;">, </span>"irs"<span style="color: #949494;">, </span>…</span></span>
 <span><span class="co">#&gt; $ id      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> 1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>1<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>2<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>3<span style="color: #949494;">, </span>4<span style="color: #949494;">, </span>4<span style="color: #949494;">, </span>4<span style="color: #949494;">, </span>4<span style="color: #949494;">, </span>4<span style="color: #949494;">, </span>5<span style="color: #949494;">,</span>…</span></span>
 <span><span class="co">#&gt; $ season  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "perennial"<span style="color: #949494;">, </span>"perennial"<span style="color: #949494;">, </span>"perennial"<span style="color: #949494;">, </span>"perennial"<span style="color: #949494;">, </span>"perennial…</span></span></code></pre></div>
+<p>The required columns include:</p>
+<ul>
+<li>
+<strong>step</strong> An integer vector. The current package is 0,
+steps down are negative and up are positive.</li>
+<li>
+<strong>package</strong> A character string indicating the name of
+the package specified as a comma separated concatenation of the
+interventions in the package. When rendering the sankey labels,
+individual interventions are stacked vertically.</li>
+<li>
+<strong>changed</strong> A character string indication which
+intervention is added or removed at each step.</li>
+<li>
+<strong>id</strong> A unqiue, interger identifier for each
+pathway</li>
+</ul>
+<p>Additional columns are grouping variables. At a minimum, you will
+likely want to include the current package as a grouping variable.</p>
 <p>The resulting data.frame records every step in each trajectory,
 including the package string and which intervention changed.</p>
 </div>
@@ -113,19 +116,19 @@ including the package string and which intervention changed.</p>
 </h2>
 <p>Next we convert the raw simulation into the node and link structures
 required by <code><a href="https://rdrr.io/pkg/networkD3/man/sankeyNetwork.html" class="external-link">networkD3::sankeyNetwork()</a></code>.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nodes</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_nodes.html">make_nodes</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
 <span><span class="va">links</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_links.html">make_links</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">nodes</span><span class="op">)</span></span>
 <span><span class="va">colours</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_colours.html">make_colours</a></span><span class="op">(</span><span class="va">nodes</span><span class="op">$</span><span class="va">id</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">nodes</span><span class="op">)</span></span>
+<span><span class="fu">glimpse</span><span class="op">(</span><span class="va">nodes</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Rows: 9</span></span>
 <span><span class="co">#&gt; Columns: 4</span></span>
 <span><span class="co">#&gt; $ name      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "cm"<span style="color: #949494;">, </span>"cm, itn"<span style="color: #949494;">, </span>"cm, itn, irs"<span style="color: #949494;">, </span>"cm, itn, smc"<span style="color: #949494;">, </span>"cm, itn, s…</span></span>
 <span><span class="co">#&gt; $ node_name <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "cm"<span style="color: #949494;">, </span>"cm\nitn"<span style="color: #949494;">, </span>"cm\nitn\nirs"<span style="color: #949494;">, </span>"cm\nitn\nsmc"<span style="color: #949494;">, </span>"cm\nitn\ns…</span></span>
 <span><span class="co">#&gt; $ id        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "0"<span style="color: #949494;">, </span>"1"<span style="color: #949494;">, </span>"2"<span style="color: #949494;">, </span>"3"<span style="color: #949494;">, </span>"4"<span style="color: #949494;">, </span>"5"<span style="color: #949494;">, </span>"6"<span style="color: #949494;">, </span>"7"<span style="color: #949494;">, </span>"8"</span></span>
 <span><span class="co">#&gt; $ p         <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "100%"<span style="color: #949494;">, </span>"100%"<span style="color: #949494;">, </span>"54%"<span style="color: #949494;">, </span>"29%"<span style="color: #949494;">, </span>"62%"<span style="color: #949494;">, </span>"15%"<span style="color: #949494;">, </span>"100%"<span style="color: #949494;">, </span>"17%"<span style="color: #949494;">, </span>"…</span></span>
-<span><span class="fu"><a href="https://pillar.r-lib.org/reference/glimpse.html" class="external-link">glimpse</a></span><span class="op">(</span><span class="va">links</span><span class="op">)</span></span>
+<span><span class="fu">glimpse</span><span class="op">(</span><span class="va">links</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Rows: 14</span></span>
 <span><span class="co">#&gt; Columns: 11</span></span>
 <span><span class="co">#&gt; $ package      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> "cm"<span style="color: #949494;">, </span>"cm, itn"<span style="color: #949494;">, </span>"cm, itn, irs"<span style="color: #949494;">, </span>"cm, itn, smc, irs"<span style="color: #949494;">, </span>"cm…</span></span>
@@ -149,7 +152,7 @@ removed.</p>
 </h2>
 <p>With the inputs prepared we can render an interactive Sankey diagram
 directly in the RStudio viewer or an HTML document.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/make_sankey.html">make_sankey</a></span><span class="op">(</span><span class="va">nodes</span>, <span class="va">links</span>, <span class="va">colours</span><span class="op">)</span></span></code></pre></div>
 <div id="htmlwidget-ac96cb3ee4656e2e9ec3" style="width:100%;height:432.632880098888px;" class="sankeyNetwork html-widget"></div>
 <script type="application/json" data-for="htmlwidget-ac96cb3ee4656e2e9ec3">{"x":{"links":{"source":[0,1,2,4,1,7,5,2,8,7,1,3,3],"target":[1,2,4,6,7,5,6,8,6,8,3,5,4],"value":[100,54,41,62,17,7,15,13,23,10,29,8,21],"group":["0","1","2","4","1","7","5","2","8","7","1","3","3"],"tooltip":["→: add itn\n←: remove itn","→: add irs\n←: remove irs","→: add smc\n←: remove smc","→: add vx\n←: remove vx","→: add vx\n←: remove vx","→: add smc\n←: remove smc","→: add irs\n←: remove irs","→: add vx\n←: remove vx","→: add smc\n←: remove smc","→: add irs\n←: remove irs","→: add smc\n←: remove smc","→: add vx\n←: remove vx","→: add irs\n←: remove irs"]},"nodes":{"name":["cm","cm\nitn","cm\nitn\nirs","cm\nitn\nsmc","cm\nitn\nsmc\nirs","cm\nitn\nsmc\nvx","cm\nitn\nsmc\nvx\nirs","cm\nitn\nvx","cm\nitn\nvx\nirs"],"group":["0","1","2","3","4","5","6","7","8"],"p":["100%","100%","54%","29%","62%","15%","100%","17%","23%"]},"options":{"NodeID":"node_name","NodeGroup":"id","LinkGroup":"id","colourScale":"d3.scaleOrdinal().domain([\"0\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\"8\"]).range([\"#AEC6CF\",\"#FFB347\",\"#77DD77\",\"#FF6961\",\"#CBAACB\",\"#F49AC2\",\"#FFD1DC\",\"#B5EAD7\",\"#FFFACD\"])","fontSize":7,"fontFamily":null,"nodeWidth":15,"nodePadding":10,"units":"","margin":{"top":null,"right":null,"bottom":null,"left":null},"iterations":32,"sinksRight":true}},"evals":[],"jsHooks":{"render":[{"code":"\nfunction(el, x) {\n\n  function applyLineBreaks(sel) {\n    if (!true) return;\n    sel.each(function(){\n      var self = d3.select(this);\n      var text = self.text();\n      if (text && text.indexOf(\"\\n\") > -1) {\n        var lines = text.split(\"\\n\");\n        self.text(null);\n        for (var i = 0; i < lines.length; i++) {\n          self.append(\"tspan\")\n              .text(lines[i])\n              .attr(\"x\", null)\n              .attr(\"dy\", i === 0 ? 0 : \"1.2em\");\n        }\n      }\n    });\n  }\n\n  function setNodeWidth() {\n    var desired = 30; // null or number\n    if (desired === null) return;\n    d3.select(el).selectAll(\".node rect\").attr(\"width\", desired);\n  }\n\n  function recenterLabels() {\n    var firstRect = d3.select(el).select(\".node rect\");\n    if (firstRect.empty()) return;\n    var nodeWidth = +firstRect.attr(\"width\") || 24;\n\n    var texts = d3.select(el).selectAll(\".node text\");\n\n    if (true) {\n      texts.attr(\"text-anchor\", \"middle\")\n           .attr(\"x\", nodeWidth / 2);\n      d3.select(el).selectAll(\".node text tspan\")\n           .attr(\"x\", nodeWidth / 2);\n    }\n\n    if (false) {\n      texts.attr(\"y\", -6);\n    }\n\n    texts.style(\"font-size\", \"14px\");\n  }\n\n  function setLinkOpacity() {\n    var links = d3.select(el).selectAll(\".link\");\n\n    if (false) {\n      var vals = (x.links || []).map(function(d){ return +d.value; }).filter(isFinite);\n      if (vals.length) {\n        var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);\n        if (min === max) {\n          links.style(\"stroke-opacity\", 0.350000);\n        } else {\n          var lin = (d3.scaleLinear || d3.scale.linear);\n          var op  = lin().domain([min, max]).range([0.200000, 0.800000]);\n          links.style(\"stroke-opacity\", function(d){ return op(+d.value); });\n        }\n      }\n    } else {\n      links.style(\"stroke-opacity\", 0.350000);\n    }\n  }\n\n  function setLinkTooltips() {\n    var linkSel = d3.select(el).selectAll(\".link\");\n    linkSel.select(\"title\").remove();\n    linkSel.append(\"title\")\n      .text(function(d){\n        if (typeof d.tooltip !== \"undefined\" && d.tooltip !== null) return d.tooltip;\n        var fmt = (d3.format ? d3.format(\",.0f\") : function(x){return x;});\n        var src = d.source && d.source.name ? d.source.name : \"\";\n        var tgt = d.target && d.target.name ? d.target.name : \"\";\n        return src + \" \\u2192 \" + tgt + \"\\n\" + fmt(+d.value);\n      });\n  }\n\n  // NEW: Node titles from x.nodes[*].p, aligned by d.index\n  function setNodeTooltipsFromNodesP() {\n    var nodesSel = d3.select(el).selectAll(\".node\");\n\n    // Remove any default titles (which show name + value)\n    nodesSel.selectAll(\"title\").remove();\n    nodesSel.selectAll(\"rect title\").remove();\n\n    nodesSel.selectAll(\"rect\").each(function(d){\n      var p = \"\";\n      if (d && typeof d.index !== \"undefined\" && x.nodes && x.nodes[d.index]) {\n        var v = x.nodes[d.index].p;\n        if (v !== null && typeof v !== \"undefined\") p = String(v);\n      } else if (d && typeof d.p !== \"undefined\" && d.p !== null) {\n        // fallback in case the sankey lib copied the field onto d\n        p = String(d.p);\n      }\n      d3.select(this).append(\"title\").text(p);\n    });\n  }\n\n  function applyAll() {\n    var texts = d3.select(el).selectAll(\".node text\");\n    applyLineBreaks(texts);\n    setNodeWidth();\n    recenterLabels();\n    setLinkOpacity();\n    setLinkTooltips();\n    setNodeTooltipsFromNodesP();   // <-- apply node p-tooltips\n  }\n\n  // First pass\n  applyAll();\n\n  var svg = el.querySelector(\"svg\");\n  if (svg) svg.removeAttribute(\"viewBox\");\n\n  // Ensure persistence after layout/transition\n  requestAnimationFrame(applyAll);\n  setTimeout(applyAll, 80);\n}\n","data":null}]}}</script><p>The widget honours the colour palette produced by
@@ -162,7 +165,7 @@ transition.</p>
 <p>To explore the same data with filtering controls, launch the bundled
 Shiny app. This opens in your default browser and allows you to subset
 the trajectories by any grouping columns you provide.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/launch_step_app.html">launch_step_app</a></span><span class="op">(</span><span class="va">df</span>, group_cols <span class="op">=</span> <span class="st">"season"</span><span class="op">)</span></span></code></pre></div>
 <p>The app keeps the same Sankey rendering but adds dropdown selectors
 for the <code>season</code> column, letting you compare perennial and
