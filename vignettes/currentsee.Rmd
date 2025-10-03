@@ -23,7 +23,7 @@ full workflow in just a few lines of code.
 
 For package users the usual library call works:
 
-```{r setup}
+```{r setup, echo=FALSE, message=FALSE}
 library(currentsee)
 library(dplyr)
 ```
@@ -42,6 +42,18 @@ df <- simulate(100) |>
 
 dplyr::glimpse(df)
 ```
+
+The required columns include:
+
+- **step** An integer vector. The current package is 0, steps down are negative and up are positive.
+- **package** A character string indicating the name of the package specified as a
+  comma separated concatenation of the interventions in the package. When rendering
+  the sankey labels, individual interventions are stacked vertically.
+- **changed** A character string indication which intervention is added or removed at each step.
+- **id** A unqiue, interger identifier for each pathway
+
+Additional columns are grouping variables. At a minimum, you will likely want to 
+include the current package as a grouping variable.
 
 The resulting data.frame records every step in each trajectory, including the
 package string and which intervention changed.
