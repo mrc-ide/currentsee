@@ -25,7 +25,7 @@ add_title <- function(widget, title, font_size = 18, align = "center") {
 #' @param colour Character CSS colour for the caption text.
 #' @param italic Logical; if TRUE, render caption in italics.
 #' @export
-add_caption <- function(widget, caption, font_size = 12, align = "center", colour = "#555", italic = TRUE) {
+add_caption <- function(widget, caption, font_size = 12, align = "center", colour = "#555", italic = FALSE) {
   htmlwidgets::appendContent(
     widget,
     htmltools::tags$p(
@@ -112,186 +112,70 @@ center_node_labels <- function(widget, nudge = 0) {
 #' add_link_tooltips
 #' @param widget A networkD3::sankeyNetwork() htmlwidget.
 #' @param tooltips Character vector of tooltips, one per link (order must match Links).
-#' @param ensure_hover Logical; if TRUE, enable pointer events on links.
 #' @export
 #'
 # Keyed link-tooltips: matches by (source,target) indices, not by order
 # Keyed (by display names) + robust fallback + forced hover
-add_link_tooltips <- function(widget, tooltips, source, target, ensure_hover = TRUE, delay_ms = 350) {
-  stopifnot(length(tooltips) == length(source), length(source) == length(target))
-  ensure_hover_js <- if (isTRUE(ensure_hover)) "true" else "false"
-
-  js <- sprintf("
-  function(el, x){
-    var tips   = %s,
-        srcIdx = %s,
-        tgtIdx = %s;
-
-    // Inject CSS to guarantee hover works (some themes disable it)
-    d3.select(el).selectAll('style.__nd3_tip_fix__').data([1]).enter()
-      .append('style').attr('class','__nd3_tip_fix__')
-      .text('.link{pointer-events:stroke !important;}');
-
-    // Build index->name from payload nodes (NodeID column becomes .name)
-    var nodeNames = (x && Array.isArray(x.nodes))
-      ? x.nodes.map(function(n){ return n && (n.name || n.id || n.node_name || ''); })
-      : [];
-
-    // Build a name-keyed map: 'srcName|tgtName' -> tooltip (first wins)
-    var nameMap = {};
-    for (var i=0;i<srcIdx.length;i++){
-      var si = srcIdx[i], ti = tgtIdx[i];
-      if (si == null || ti == null) continue;
-      var sName = nodeNames[si] != null ? String(nodeNames[si]) : null;
-      var tName = nodeNames[ti] != null ? String(nodeNames[ti]) : null;
-      if (sName == null || tName == null) continue;
-      var key = sName + '|' + tName;
-      if (!(key in nameMap)) nameMap[key] = (tips[i] == null ? '' : String(tips[i]));
-    }
-
-    var root = d3.select(el);
-
-    function apply(){
-      var paths = root.selectAll('path.link, .link');
-      if (paths.empty()) return;
-
-      if (%s) paths.style('pointer-events','stroke');
-
-      // For pairs rendered multiple times, use a counter per key
-      var used = {};
-
-      paths.each(function(d, i){
-        var sel = d3.select(this);
-        sel.selectAll('title').remove();
-
-        // Try to read display names from bound d
-        var sName = (d && d.source && (d.source.name || d.source.id)) || null;
-        var tName = (d && d.target && (d.target.name || d.target.id)) || null;
-
-        var tip = null;
-        if (sName && tName){
-          var key = String(sName) + '|' + String(tName);
-          if (Object.prototype.hasOwnProperty.call(nameMap, key)){
-            var k = (used[key] = (used[key] || 0));
-            tip = nameMap[key];           // first wins; change to array & index if you want per-dup texts
-            used[key] = k + 1;
-          }
-        }
-        // Fallback: preserve your original order-based behaviour
-        if ((tip == null || tip === '') && tips && tips.length > i) tip = tips[i];
-
-        if (tip != null && tip !== '') sel.append('title').text(String(tip));
-      });
-    }
-
-    // Apply after render + keep it applied on changes/resizes
-    setTimeout(apply, %d);
-
-    if (window && window.ResizeObserver){
-      var ro = new ResizeObserver(function(){ setTimeout(apply, 0); });
-      ro.observe(el);
-    } else if (window){
-      window.addEventListener('resize', apply);
-    }
-
-    // Re-apply when the SVG content mutates (layout/transition/redraw)
-    var svg = el.querySelector('svg');
-    if (window && window.MutationObserver && svg){
-      var mo = new MutationObserver(function(){ setTimeout(apply, 0); });
-      mo.observe(svg, {childList:true, subtree:true});
-    }
-  }",
-                jsonlite::toJSON(tooltips, auto_unbox = TRUE, null = "null"),
-                jsonlite::toJSON(source,   auto_unbox = TRUE),
-                jsonlite::toJSON(target,   auto_unbox = TRUE),
-                ensure_hover_js,
-                as.integer(delay_ms)
+add_link_tooltips <- function(widget, tooltip) {
+  widget$x$links$tooltip <- tooltip
+  htmlwidgets::onRender(
+    widget,
+    '
+  function(el, x) {
+    d3.selectAll(".link").select("title")
+    .text(function(d) { return d.tooltip; });
+  }
+  '
   )
-
-  htmlwidgets::onRender(widget, js)
 }
-# add_link_tooltips <- function(widget, tooltips, ensure_hover = TRUE) {
-#   ensure_hover_js <- if (isTRUE(ensure_hover)) "true" else "false"
-#
-#   js <- sprintf("
-#   function(el, x) {
-#     var tips = %s;  // tooltip vector passed from R
-#     var root = d3.select(el);
-#
-#     function apply() {
-#       var paths = root.selectAll('path.link, .link');
-#       if (paths.empty()) return;
-#
-#       if (%s) paths.style('pointer-events', 'stroke');
-#
-#       paths.each(function(d, i) {
-#         var sel = d3.select(this);
-#         sel.selectAll('title').remove();
-#         if (tips && tips.length > i && tips[i] != null && tips[i] !== '') {
-#           sel.append('title').text(String(tips[i]));
-#         }
-#       });
-#     }
-#
-#     apply();
-#     setTimeout(apply, 80);
-#     if (window && window.ResizeObserver) {
-#       var ro = new ResizeObserver(function(){ setTimeout(apply, 0); });
-#       ro.observe(el);
-#     } else if (window) {
-#       window.addEventListener('resize', apply);
-#     }
-#   }",
-#                 jsonlite::toJSON(tooltips, auto_unbox = TRUE, null = "null"),
-#                 ensure_hover_js
-#   )
-#
-#   htmlwidgets::onRender(widget, js)
-# }
 
 #' add_node_tooltips
 #' @param widget A networkD3::sankeyNetwork() htmlwidget.
 #' @param tooltips Character vector of tooltips, one per node (order must match Nodes).
-#' @param ensure_hover Logical; if TRUE, enable pointer events on node rectangles.
 #' @export
-add_node_tooltips <- function(widget, tooltips, ensure_hover = TRUE) {
-  ensure_hover_js <- if (isTRUE(ensure_hover)) "true" else "false"
-
-  js <- sprintf("
+add_node_tooltips <- function(widget, tooltip) {
+  widget$x$nodes$tooltip <- tooltip
+  htmlwidgets::onRender(
+    widget,
+    '
   function(el, x) {
-    var tips = %s;  // tooltip vector passed from R
+    d3.selectAll(".node").select("title")
+    .text(function(d) { return d.tooltip; });
+  }
+  '
+  )
+}
+
+remove_ghost <- function(widget){
+  htmlwidgets::onRender(
+    widget,
+    "
+  function(el, x) {
     var root = d3.select(el);
 
-    function apply() {
-      var rects = root.selectAll('.node rect');
-      if (rects.empty()) return;
+    // Hide any node whose tooltip is exactly 'NA'
+    root.selectAll('.node')
+      .filter(function(d) {
+        return d.tooltip === 'ghost';
+      })
+      .style('opacity', 0)
+      .style('pointer-events', 'none');
 
-      if (%s) rects.style('pointer-events', 'all');
-
-      rects.each(function(d, i) {
-        var sel = d3.select(this);
-        sel.selectAll('title').remove();
-        if (tips && tips.length > i && tips[i] != null && tips[i] !== '') {
-          sel.append('title').text(String(tips[i]));
-        }
-      });
-    }
-
-    apply();
-    setTimeout(apply, 80);
-    if (window && window.ResizeObserver) {
-      var ro = new ResizeObserver(function(){ setTimeout(apply, 0); });
-      ro.observe(el);
-    } else if (window) {
-      window.addEventListener('resize', apply);
-    }
-  }",
-                jsonlite::toJSON(tooltips, auto_unbox = TRUE, null = "null"),
-                ensure_hover_js
+    // Also hide any links connected to those nodes
+    root.selectAll('path.link, .link')
+      .filter(function(d) {
+        var src = d.source && (d.source.tooltip === 'ghost');
+        var tgt = d.target && (d.target.tooltip === 'ghost');
+        return src || tgt;
+      })
+      .style('opacity', 0)
+      .style('stroke-opacity', 0)
+      .style('pointer-events', 'none');
+  }
+  "
   )
-
-  htmlwidgets::onRender(widget, js)
 }
+
 
 #' make_colour_scale
 #' @param unknown Character CSS colour used for unmapped/unknown groups.

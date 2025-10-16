@@ -21,7 +21,10 @@ ui <- fluidPage(
       })
     ),
     mainPanel(
-      networkD3::sankeyNetworkOutput("sankey", height = "500px")
+      h4("Increasing spend"),
+      networkD3::sankeyNetworkOutput("sankey_up", height = "500px"),
+      h4("Decreasing spend"),
+      networkD3::sankeyNetworkOutput("sankey_down", height = "500px")
     )
   )
 )
@@ -35,18 +38,35 @@ server <- function(input, output, session) {
         d <- d[d[[gc]] == val, , drop = FALSE]
       }
     }
-    nodes <- make_nodes(d)
-    links <- make_links(d, nodes)
+
+    d_up <- d[d$step >=0, ]
+    nodes_up <- make_nodes(d_up)
+    links_up <- make_links(d_up, nodes_up)
+
+    d_down <- d[d$step <=0, ]
+    nodes_down <- make_nodes(d_down)
+    links_down <- make_links(d_down, nodes_down, down = TRUE)
+
     return(list(
-      nodes = nodes,
-      links = links
+      nodes_down = nodes_down,
+      links_down = links_down,
+      nodes_up = nodes_up,
+      links_up = links_up
     ))
   })
 
-  output$sankey <- networkD3::renderSankeyNetwork({
+  output$sankey_up <- networkD3::renderSankeyNetwork({
     currentsee::make_sankey(
-      filtered()$nodes,
-      filtered()$links
+      filtered()$nodes_up,
+      filtered()$links_up,
+      nodeWidth = 30
+    )
+  })
+  output$sankey_down <- networkD3::renderSankeyNetwork({
+    currentsee::make_sankey(
+      filtered()$nodes_down,
+      filtered()$links_down,
+      nodeWidth = 30
     )
   })
 }

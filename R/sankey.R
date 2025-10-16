@@ -46,6 +46,9 @@ make_nodes <- function(x) {
     dplyr::left_join(prop, by = "name") |>
     dplyr::left_join(package_id, by = c("name" = "package"))
 
+  nodes <- dplyr::bind_rows(nodes,
+                 data.frame(name = "ghost", tooltip = "ghost"))
+
   nodes
 }
 
@@ -60,7 +63,7 @@ make_nodes <- function(x) {
 #'   `target`, and tooltip metadata.
 #'
 #' @export
-make_links <- function(x, nodes = make_nodes(x)) {
+make_links <- function(x, nodes = make_nodes(x), down = FALSE) {
   required_cols <- c("id", "step", "package")
   missing <- setdiff(required_cols, names(x))
   if (length(missing) > 0) {
@@ -73,12 +76,19 @@ make_links <- function(x, nodes = make_nodes(x)) {
 
   node_lookup <- nodes$name
 
-  x |>
-    dplyr::arrange("id", "step") |>
+  if(down){
+    x$step = abs(x$step)
+  }
+
+  x <- x |>
+    dplyr::arrange(id, step) |>
     dplyr::mutate(
       next_package = dplyr::lead(.data$package),
       next_step = dplyr::lead(.data$step),
       .by = "id"
+    ) |>
+    dplyr::mutate(
+      next_package = ifelse(is.na(next_package), "ghost", next_package)
     ) |>
     dplyr::summarise(
       value = dplyr::n(),
@@ -89,11 +99,14 @@ make_links <- function(x, nodes = make_nodes(x)) {
       target = match(.data$next_package, node_lookup) - 1L,
       label = gsub(", ", "\n", .data$package, fixed = TRUE),
       id = as.character(.data$source)
-    ) |>
-    dplyr::mutate(
+    )
+
+  if(down){
+    x <- x |>
+      dplyr::mutate(
       change = purrr::map2_chr(
-        strsplit(.data$package, ",\\s*"),
         strsplit(.data$next_package, ",\\s*"),
+        strsplit(.data$package, ",\\s*"),
         ~ {
           if (any(is.na(.y))) {
             return(NA_character_)
@@ -103,11 +116,32 @@ make_links <- function(x, nodes = make_nodes(x)) {
         }
       )
     ) |>
-    dplyr::mutate(
-      tooltip_add = paste0("\u2192: add ", .data$change),
-      tooltip_remove = paste0("\u2192: remove ", .data$change),
-      tooltip = paste0("\u2192: add ", .data$change, "\n\u2190: remove ", .data$change)
-    ) |>
+      dplyr::mutate(
+        tooltip = paste0("\u2192: remove ", .data$change),
+        tooltip = ifelse(next_package == "ghost", "NA", tooltip)
+      )
+  } else {
+    x <- x |>
+      dplyr::mutate(
+        change = purrr::map2_chr(
+          strsplit(.data$package, ",\\s*"),
+          strsplit(.data$next_package, ",\\s*"),
+          ~ {
+            if (any(is.na(.y))) {
+              return(NA_character_)
+            }
+            new <- setdiff(.y, .x)
+            paste(new, collapse = ", ")
+          }
+        )
+      ) |>
+      dplyr::mutate(
+        tooltip = paste0("\u2192: add ", .data$change),
+        tooltip = ifelse(next_package == "ghost", "NA", tooltip)
+      )
+  }
+
+  x |>
     dplyr::mutate(
       p = paste0(round(100 * .data$value / sum(.data$value), 1), "%"),
       .by = "step"
@@ -131,9 +165,9 @@ make_sankey <- function(
     links,
     ...
 ) {
-  browser()
+
   networkD3::sankeyNetwork(
-    Links  = dplyr::filter(links, !is.na(.data$next_package)),
+    Links  = links,
     Nodes  = nodes,
     Source = "source",
     Target = "target",
@@ -147,6 +181,7 @@ make_sankey <- function(
   ) |>
     add_linebreaks_in_labels() |>
     center_node_labels() |>
-    add_link_tooltips(links$tooltip, links$source, links$target) |>
-    add_node_tooltips(nodes$tooltip)
+    add_link_tooltips(links$tooltip) |>
+    add_node_tooltips(nodes$tooltip) |>
+    remove_ghost()
 }
