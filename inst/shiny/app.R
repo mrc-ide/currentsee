@@ -37,19 +37,16 @@ server <- function(input, output, session) {
     }
     nodes <- make_nodes(d)
     links <- make_links(d, nodes)
-    colours <- make_colours(nodes$id)
     return(list(
       nodes = nodes,
-      links = links,
-      colours = colours
+      links = links
     ))
   })
 
   output$sankey <- networkD3::renderSankeyNetwork({
     currentsee::make_sankey(
       filtered()$nodes,
-      filtered()$links,
-      filtered()$colours
+      filtered()$links
     )
   })
 }
