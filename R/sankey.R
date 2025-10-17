@@ -176,7 +176,6 @@ make_sankey <- function(
     NodeGroup = "package_id",
     LinkGroup = "package_id",
     colourScale = make_colour_scale(),
-    width = "100%",
     ...
   ) |>
     add_linebreaks_in_labels() |>
