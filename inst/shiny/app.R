@@ -3,58 +3,102 @@ df <- opts$df
 group_cols <- opts$group_cols
 
 library(shiny)
+library(bslib)
 library(shinythemes)
 library(dplyr)
 library(tidyr)
 library(networkD3)
 
-ui <- fluidPage(
+ui <- navbarPage(
+  title = HTML(
+    '<div style="display:flex; align-items:center;">
+       <img src="M3CPI_transparent.png" style="height:35px; margin-right:10px;">
+       <div>M3CPI<br><small>modelling to inform malaria intervention prioritisation</small></div>
+     </div>'
+  ),
   theme = shinytheme("sandstone"),
-  titlePanel("CE pathways"),
-  sidebarLayout(
-    sidebarPanel(
-      lapply(group_cols, function(gc) {
-        selectInput(
-          inputId = gc,
-          label = gc,
-          choices = c("All", sort(unique(df[[gc]]))),
-          selected = "All",
-          selectize = TRUE
-        )
-      }),
-      width = 3
-    ),
-    mainPanel(
+
+  # Page 1: Introduction -------------------------------------------------------
+  tabPanel(
+    "Introduction",
+    fluidPage(
       bslib::card(
-        height = "620px",   # or drop this line entirely if you want the card to size to content
-        bslib::navset_card_pill(
-          bslib::nav_panel(
-            "Reading the Sankey",
-            uiOutput("reading_sankey_text")
-          ),
-          bslib::nav_panel(
-            "Decreasing spend",
-            networkD3::sankeyNetworkOutput(
-              "sankey_down",
-              height = "500px",
-              width = "100%"
-            ),
-            h4(" \u27A1 \u27A1 \u27A1 \u27A1 \u27A1 Decreasing spend \u27A1 \u27A1 \u27A1 \u27A1 \u27A1"),
-          ),
-          bslib::nav_panel(
-            "Increasing spend",
-            networkD3::sankeyNetworkOutput(
-              "sankey_up",
-              height = "500px",
-              width = "100%"
-            ),
-            h4(" \u27A1 \u27A1 \u27A1 \u27A1 \u27A1 Increasing spend \u27A1 \u27A1 \u27A1 \u27A1 \u27A1")
+        bslib::card_header("Welcome"),
+        p("This is a placeholder introduction. Briefly explain the purpose of the app,
+          data sources, and what users can do here."),
+        p("Add any context, scope, and caveats you want users to know before exploring.")
+      )
+    )
+  ),
+  # ----------------------------------------------------------------------------
+
+  # Page 2: How to interpret output --------------------------------------------
+  tabPanel(
+    "How to interpret output",
+    fluidPage(
+      bslib::card(
+        bslib::card_header("Reading the Sankey outputs"),
+        p("Placeholder guidance on interpreting the visualisations and metrics."),
+        tags$ul(
+          tags$li("What each node and link represents."),
+          tags$li("Direction of flow and sign conventions."),
+          tags$li("Any thresholds, filters, or assumptions to keep in mind.")
+        ),
+        p("You can expand this section later with examples and screenshots.")
+      )
+    )
+  ),
+  # ----------------------------------------------------------------------------
+
+  # Page 3: Output -------------------------------------------------------------
+  tabPanel(
+    "Explore",
+    fluidPage(
+      titlePanel("CE pathways"),
+      sidebarLayout(
+        sidebarPanel(
+          lapply(group_cols, function(gc) {
+            selectInput(
+              inputId = gc,
+              label = gc,
+              choices = c("All", sort(unique(df[[gc]]))),
+              selected = "All",
+              selectize = TRUE
+            )
+          }),
+          width = 3
+        ),
+        mainPanel(
+          bslib::card(
+            height = "620px",
+            bslib::navset_card_pill(
+              bslib::nav_panel(
+                "Decreasing spend",
+                networkD3::sankeyNetworkOutput(
+                  "sankey_down",
+                  height = "500px",
+                  width = "100%"
+                ),
+                h4("") # Empty line gets rid of unnecessary vertical scroll bar
+              ),
+              bslib::nav_panel(
+                "Increasing spend",
+                networkD3::sankeyNetworkOutput(
+                  "sankey_up",
+                  height = "500px",
+                  width = "100%"
+                ),
+                h4("") # Empty line gets rid of unnecessary vertical scroll bar
+              )
+            )
           )
         )
       )
     )
   )
+  # ----------------------------------------------------------------------------
 )
+
 
 server <- function(input, output, session) {
   filtered <- reactive({
