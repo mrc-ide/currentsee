@@ -10,7 +10,7 @@ add_caption(
   font_size = 12,
   align = "center",
   colour = "#555",
-  italic = TRUE
+  italic = FALSE
 )
 }
 \arguments{

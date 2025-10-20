@@ -4,14 +4,12 @@
 \alias{add_node_tooltips}
 \title{add_node_tooltips}
 \usage{
-add_node_tooltips(widget, tooltips, ensure_hover = TRUE)
+add_node_tooltips(widget, tooltip)
 }
 \arguments{
 \item{widget}{A networkD3::sankeyNetwork() htmlwidget.}
 
-\item{tooltips}{Character vector of tooltips, one per node (order must match Nodes).}
-
-\item{ensure_hover}{Logical; if TRUE, enable pointer events on node rectangles.}
+\item{tooltip}{Character vector of tooltips, one per node (order must match Nodes).}
 }
 \description{
 add_node_tooltips

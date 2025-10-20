@@ -4,14 +4,12 @@
 \alias{add_link_tooltips}
 \title{add_link_tooltips}
 \usage{
-add_link_tooltips(widget, tooltips, ensure_hover = TRUE)
+add_link_tooltips(widget, tooltip)
 }
 \arguments{
 \item{widget}{A networkD3::sankeyNetwork() htmlwidget.}
 
-\item{tooltips}{Character vector of tooltips, one per link (order must match Links).}
-
-\item{ensure_hover}{Logical; if TRUE, enable pointer events on links.}
+\item{tooltip}{Character vector of tooltips, one per link (order must match Links).}
 }
 \description{
 add_link_tooltips

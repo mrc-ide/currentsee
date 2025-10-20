@@ -12,6 +12,8 @@ make_sankey(nodes, links, ...)
 
 \item{links}{Data frame describing connections between nodes, typically the
 output of \code{\link[=make_links]{make_links()}}.}
+
+\item{...}{Addtional arguments to pass to \code{\link[networkD3:sankeyNetwork]{networkD3::sankeyNetwork()}}}
 }
 \value{
 An htmlwidgets object produced by

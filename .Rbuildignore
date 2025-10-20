@@ -7,3 +7,4 @@
 ^pkgdown$
 ^LICENSE\.md$
 AGENTS.md
+^data-raw$

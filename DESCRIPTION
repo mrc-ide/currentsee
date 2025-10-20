@@ -19,7 +19,8 @@ Imports:
     purrr,
     shiny,
     rlang,
-    jsonlite
+    jsonlite,
+    htmltools
 Suggests:
     knitr,
     qpdf,

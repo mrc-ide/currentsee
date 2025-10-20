@@ -111,7 +111,7 @@ center_node_labels <- function(widget, nudge = 0) {
 
 #' add_link_tooltips
 #' @param widget A networkD3::sankeyNetwork() htmlwidget.
-#' @param tooltips Character vector of tooltips, one per link (order must match Links).
+#' @param tooltip Character vector of tooltips, one per link (order must match Links).
 #' @export
 #'
 # Keyed link-tooltips: matches by (source,target) indices, not by order
@@ -131,7 +131,7 @@ add_link_tooltips <- function(widget, tooltip) {
 
 #' add_node_tooltips
 #' @param widget A networkD3::sankeyNetwork() htmlwidget.
-#' @param tooltips Character vector of tooltips, one per node (order must match Nodes).
+#' @param tooltip Character vector of tooltips, one per node (order must match Nodes).
 #' @export
 add_node_tooltips <- function(widget, tooltip) {
   widget$x$nodes$tooltip <- tooltip
@@ -183,8 +183,8 @@ remove_ghost <- function(widget){
 make_colour_scale <- function(unknown = "#cccccc") {
   sprintf(
     "d3.scaleOrdinal().domain(%s).range(%s).unknown(%s)",
-    jsonlite::toJSON(package_id$package_id, auto_unbox = TRUE),
-    jsonlite::toJSON(package_id$colour, auto_unbox = TRUE),
+    jsonlite::toJSON(currentsee::package_id$package_id, auto_unbox = TRUE),
+    jsonlite::toJSON(currentsee::package_id$colour, auto_unbox = TRUE),
     jsonlite::toJSON(unknown,      auto_unbox = TRUE)
   )
 }

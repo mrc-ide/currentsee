@@ -1,14 +1,6 @@
 #' @importFrom rlang .data
 NULL
 
-check_x <- function(x){
-  stopifnot("id" %in% names(x))
-  stopifnot("step" %in% names(x))
-  stopifnot("package" %in% names(x))
-  grouping <- setdiff(names(x), c("id", "step", "package"))
-  print(paste0("Grouping cols: ", paste(grouping, collapse = ", ")))
-}
-
 #' Create nodes for a step-package Sankey diagram
 #'
 #' @param x A data frame containing at least a `package` column where each
@@ -52,7 +44,7 @@ make_nodes <- function(x) {
 
   nodes <- nodes |>
     dplyr::left_join(prop, by = "name") |>
-    dplyr::left_join(package_id, by = c("name" = "package"))
+    dplyr::left_join(currentsee::package_id, by = c("name" = "package"))
 
   nodes <- dplyr::bind_rows(nodes,
                  data.frame(name = "ghost", tooltip = "ghost"))
@@ -66,6 +58,7 @@ make_nodes <- function(x) {
 #'   columns describing package transitions for each simulation run.
 #' @param nodes Optional nodes data frame as returned by [make_nodes()]. If
 #'   omitted the nodes are derived from `x`.
+#' @param down Logical indicator if moving up or down frontier
 #'
 #' @return A tibble describing links between nodes including `source`,
 #'   `target`, and tooltip metadata.
@@ -89,14 +82,14 @@ make_links <- function(x, nodes = make_nodes(x), down = FALSE) {
   }
 
   x <- x |>
-    dplyr::arrange(id, step) |>
+    dplyr::arrange(.data$id, .data$step) |>
     dplyr::mutate(
       next_package = dplyr::lead(.data$package),
       next_step = dplyr::lead(.data$step),
       .by = "id"
     ) |>
     dplyr::mutate(
-      next_package = ifelse(is.na(next_package), "ghost", next_package)
+      next_package = ifelse(is.na(.data$next_package), "ghost", .data$next_package)
     ) |>
     dplyr::summarise(
       value = dplyr::n(),
@@ -126,7 +119,7 @@ make_links <- function(x, nodes = make_nodes(x), down = FALSE) {
     ) |>
       dplyr::mutate(
         tooltip = paste0("\u2192: remove ", .data$change),
-        tooltip = ifelse(next_package == "ghost", "NA", tooltip)
+        tooltip = ifelse(.data$next_package == "ghost", "NA", .data$tooltip)
       )
   } else {
     x <- x |>
@@ -145,7 +138,7 @@ make_links <- function(x, nodes = make_nodes(x), down = FALSE) {
       ) |>
       dplyr::mutate(
         tooltip = paste0("\u2192: add ", .data$change),
-        tooltip = ifelse(next_package == "ghost", "NA", tooltip)
+        tooltip = ifelse(.data$next_package == "ghost", "NA", .data$tooltip)
       )
   }
 
@@ -154,7 +147,7 @@ make_links <- function(x, nodes = make_nodes(x), down = FALSE) {
       p = paste0(round(100 * .data$value / sum(.data$value), 1), "%"),
       .by = "step"
     )  |>
-    dplyr::left_join(package_id, by = c("package")) |>
+    dplyr::left_join(currentsee::package_id, by = c("package")) |>
     as.data.frame()
 }
 
@@ -164,6 +157,7 @@ make_links <- function(x, nodes = make_nodes(x), down = FALSE) {
 #'   [make_nodes()].
 #' @param links Data frame describing connections between nodes, typically the
 #'   output of [make_links()].
+#' @param ... Addtional arguments to pass to [networkD3::sankeyNetwork()]
 #'
 #' @return An htmlwidgets object produced by
 #'   [networkD3::sankeyNetwork()].

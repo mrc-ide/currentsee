@@ -66,7 +66,6 @@ by `networkD3::sankeyNetwork()`.
 ```{r build}
 nodes <- make_nodes(df)
 links <- make_links(df, nodes)
-colours <- make_colours(nodes$id)
 
 glimpse(nodes)
 glimpse(links)
@@ -82,7 +81,7 @@ With the inputs prepared we can render an interactive Sankey diagram directly
 in the RStudio viewer or an HTML document.
 
 ```{r sankey, out.width='100%'}
-make_sankey(nodes, links, colours)
+make_sankey(nodes, links)
 
 ```
 
