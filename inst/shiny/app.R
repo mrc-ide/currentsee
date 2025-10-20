@@ -204,6 +204,20 @@ server <- function(input, output, session) {
     )
   })
   # ----------------------------------------------------------------------------
+
+  # Download Sankeys
+  output$dl_up_png <- downloadHandler(
+    filename = function() paste0("sankey_up_", Sys.Date(), ".png"),
+    content = function(file){
+      w <- currentsee::make_sankey(
+        filtered()$nodes_up, filtered()$links_up,
+        nodeWidth = 60, fontSize = 15
+      )
+      html_file <- tempfile(fileext = ".html")
+      htmlwidgets::saveWidget(w, file = html_file, selfcontained = TRUE)
+      webshot2::webshot(html_file, file = file, vwidth = 1200, vheight = 700)
+    }
+  )
 }
 
 shinyApp(ui, server)
