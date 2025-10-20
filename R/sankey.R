@@ -1,6 +1,14 @@
 #' @importFrom rlang .data
 NULL
 
+check_x <- function(x){
+  stopifnot("id" %in% names(x))
+  stopifnot("step" %in% names(x))
+  stopifnot("package" %in% names(x))
+  grouping <- setdiff(names(x), c("id", "step", "package"))
+  print(paste0("Grouping cols: ", paste(grouping, collapse = ", ")))
+}
+
 #' Create nodes for a step-package Sankey diagram
 #'
 #' @param x A data frame containing at least a `package` column where each

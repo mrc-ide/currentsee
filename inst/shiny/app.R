@@ -57,21 +57,33 @@ ui <- navbarPage(
       titlePanel("CE pathways"),
       sidebarLayout(
         sidebarPanel(
-          lapply(group_cols, function(gc) {
-            selectInput(
-              inputId = gc,
-              label = gc,
-              choices = c("All", sort(unique(df[[gc]]))),
-              selected = "All",
-              selectize = TRUE
-            )
-          }),
+          # Optional CSV upload ------------------------------------------------
+          fileInput(
+            "csv_upload",
+            "Upload CSV to replace default inputs",
+            accept = c(".csv", "text/csv", "text/comma-separated-values")
+          ),
+          tags$hr(),
+          # --------------------------------------------------------------------
+
+          # Grouping column secection ------------------------------------------
+          selectInput(
+            "group_cols",
+            "Select grouping columns:",
+            choices = names(df),     # initial choices from default df
+            selected = NULL,
+            multiple = TRUE
+          ),
+          tags$hr(),
+          # --------------------------------------------------------------------
+          uiOutput("dynamic_filters"),
           width = 3
         ),
         mainPanel(
           bslib::card(
             height = "620px",
             bslib::navset_card_pill(
+              # Sankey display for increasing spend ----------------------------
               bslib::nav_panel(
                 "Decreasing spend",
                 networkD3::sankeyNetworkOutput(
@@ -81,6 +93,9 @@ ui <- navbarPage(
                 ),
                 h4("") # Empty line gets rid of unnecessary vertical scroll bar
               ),
+              # ----------------------------------------------------------------
+
+              # Sankey display for decreasing spend ----------------------------
               bslib::nav_panel(
                 "Increasing spend",
                 networkD3::sankeyNetworkOutput(
@@ -90,6 +105,7 @@ ui <- navbarPage(
                 ),
                 h4("") # Empty line gets rid of unnecessary vertical scroll bar
               )
+              # ----------------------------------------------------------------
             )
           )
         )
@@ -101,15 +117,50 @@ ui <- navbarPage(
 
 
 server <- function(input, output, session) {
+  df_current <- reactiveVal(df)
+
+  # User uploads a new csv input file ------------------------------------------
+  observeEvent(input$csv_upload, {
+    req(input$csv_upload)
+    df_current(read.csv(input$csv_upload$datapath, check.names = FALSE))
+  })
+  # ----------------------------------------------------------------------------
+
+  # If input df changes, update grouping column selection options --------------
+  observeEvent(df_current(), {
+    d <- df_current()
+    cols <- names(d)
+    default_select <- if ("current" %in% cols) "current" else NULL
+    updateSelectInput(
+      session,
+      "group_cols",
+      choices  = names(d),
+      selected = default_select
+    )
+  }, ignoreInit = FALSE)
+  # ----------------------------------------------------------------------------
+
+  # Render selection drop downs for selected grouping cols ---------------------
+  output$dynamic_filters <- renderUI({
+    d <- df_current()
+    gcs <- if (is.null(input$group_cols)) character() else input$group_cols
+    lapply(gcs, function(gc) {
+      vals <- if (gc %in% names(d)) d[[gc]] else character()
+      choices <- c("All", sort(unique(as.character(vals))))
+      selectInput(gc, gc, choices = choices, selected = "All", selectize = TRUE)
+    })
+  })
+  #-----------------------------------------------------------------------------
+
+  # When df and choices are made filter input df -------------------------------
   filtered <- reactive({
-    d <- df
+    d <- df_current()
     for (gc in group_cols) {
       val <- input[[gc]]
       if (!is.null(val) && val != "All") {
         d <- d[d[[gc]] == val, , drop = FALSE]
       }
     }
-
     d_up <- d[d$step >=0, ]
     nodes_up <- make_nodes(d_up)
     links_up <- make_links(d_up, nodes_up)
@@ -125,18 +176,9 @@ server <- function(input, output, session) {
       links_up = links_up
     ))
   })
+  # ----------------------------------------------------------------------------
 
-  output$reading_sankey_text <- renderUI({
-    tagList(
-      h4("Reading the Sankey"),
-      p("• Each node represents a spending category or programme area."),
-      p("• Link width is proportional to the magnitude of flow."),
-      p("• Hover tooltips show labels and values; drag nodes to explore."),
-      p("Use the left-hand navigation to switch between
-       'Increasing spend' and 'Decreasing spend'.")
-    )
-  })
-
+  # Plot sankeys ---------------------------------------------------------------
   output$sankey_up <- networkD3::renderSankeyNetwork({
     validate(
       need(!is.null(input$current) && nzchar(input$current) && input$current != "All",
@@ -161,6 +203,7 @@ server <- function(input, output, session) {
       fontSize = 15
     )
   })
+  # ----------------------------------------------------------------------------
 }
 
 shinyApp(ui, server)
