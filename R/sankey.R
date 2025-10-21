@@ -28,7 +28,7 @@ make_nodes <- function(x) {
     character(1)
   )
 
-  nodes$id <- as.character(seq_len(nrow(nodes)) - 1L)
+  denominator = max(table(x$package))
 
   prop <-  x |>
     dplyr::summarise(
@@ -36,14 +36,18 @@ make_nodes <- function(x) {
       .by = c("step", "package")
     ) |>
     dplyr::mutate(
-      p = paste0(round(100 * .data$n / sum(.data$n), 1), "%"),
+      tooltip = paste0(round(100 * .data$n / denominator, 1), "%"),
       .by = c("step")
     ) |>
     dplyr::rename("name" = "package") |>
-    dplyr::select("name", "p")
+    dplyr::select("name", "tooltip")
 
   nodes <- nodes |>
-    dplyr::left_join(prop, by = "name")
+    dplyr::left_join(prop, by = "name") |>
+    dplyr::left_join(currentsee::package_id, by = c("name" = "package"))
+
+  nodes <- dplyr::bind_rows(nodes,
+                 data.frame(name = "ghost", tooltip = "ghost"))
 
   nodes
 }
@@ -54,12 +58,13 @@ make_nodes <- function(x) {
 #'   columns describing package transitions for each simulation run.
 #' @param nodes Optional nodes data frame as returned by [make_nodes()]. If
 #'   omitted the nodes are derived from `x`.
+#' @param down Logical indicator if moving up or down frontier
 #'
 #' @return A tibble describing links between nodes including `source`,
 #'   `target`, and tooltip metadata.
 #'
 #' @export
-make_links <- function(x, nodes = make_nodes(x)) {
+make_links <- function(x, nodes = make_nodes(x), down = FALSE) {
   required_cols <- c("id", "step", "package")
   missing <- setdiff(required_cols, names(x))
   if (length(missing) > 0) {
@@ -72,12 +77,19 @@ make_links <- function(x, nodes = make_nodes(x)) {
 
   node_lookup <- nodes$name
 
-  x |>
-    dplyr::arrange("id", "step") |>
+  if(down){
+    x$step = abs(x$step)
+  }
+
+  x <- x |>
+    dplyr::arrange(.data$id, .data$step) |>
     dplyr::mutate(
       next_package = dplyr::lead(.data$package),
       next_step = dplyr::lead(.data$step),
       .by = "id"
+    ) |>
+    dplyr::mutate(
+      next_package = ifelse(is.na(.data$next_package), "ghost", .data$next_package)
     ) |>
     dplyr::summarise(
       value = dplyr::n(),
@@ -88,11 +100,14 @@ make_links <- function(x, nodes = make_nodes(x)) {
       target = match(.data$next_package, node_lookup) - 1L,
       label = gsub(", ", "\n", .data$package, fixed = TRUE),
       id = as.character(.data$source)
-    ) |>
-    dplyr::mutate(
+    )
+
+  if(down){
+    x <- x |>
+      dplyr::mutate(
       change = purrr::map2_chr(
-        strsplit(.data$package, ",\\s*"),
         strsplit(.data$next_package, ",\\s*"),
+        strsplit(.data$package, ",\\s*"),
         ~ {
           if (any(is.na(.y))) {
             return(NA_character_)
@@ -102,49 +117,38 @@ make_links <- function(x, nodes = make_nodes(x)) {
         }
       )
     ) |>
-    dplyr::mutate(
-      tooltip = paste0("\u2192: add ", .data$change, "\n\u2190: remove ", .data$change)
-    ) |>
+      dplyr::mutate(
+        tooltip = paste0("\u2192: remove ", .data$change),
+        tooltip = ifelse(.data$next_package == "ghost", "NA", .data$tooltip)
+      )
+  } else {
+    x <- x |>
+      dplyr::mutate(
+        change = purrr::map2_chr(
+          strsplit(.data$package, ",\\s*"),
+          strsplit(.data$next_package, ",\\s*"),
+          ~ {
+            if (any(is.na(.y))) {
+              return(NA_character_)
+            }
+            new <- setdiff(.y, .x)
+            paste(new, collapse = ", ")
+          }
+        )
+      ) |>
+      dplyr::mutate(
+        tooltip = paste0("\u2192: add ", .data$change),
+        tooltip = ifelse(.data$next_package == "ghost", "NA", .data$tooltip)
+      )
+  }
+
+  x |>
     dplyr::mutate(
       p = paste0(round(100 * .data$value / sum(.data$value), 1), "%"),
       .by = "step"
-    ) |>
+    )  |>
+    dplyr::left_join(currentsee::package_id, by = c("package")) |>
     as.data.frame()
-}
-
-#' Create a D3 colour scale for Sankey nodes
-#'
-#' @param id Character vector of node identifiers, usually from
-#'   `nodes$id`.
-#'
-#' @return A JavaScript expression defining a D3 ordinal scale that maps nodes
-#'   to pastel colours.
-#' @export
-make_colours <- function(id) {
-  pal <- c(
-    "#AEC6CF", # pastel blue
-    "#FFB347", # pastel orange
-    "#77DD77", # pastel green
-    "#FF6961", # pastel red/coral
-    "#CBAACB", # pastel lilac
-    "#F49AC2", # pastel pink
-    "#FFD1DC", # very pale rose
-    "#B5EAD7", # pastel mint
-    "#FFFACD", # pastel lemon
-    "#ADD8E6", # soft sky blue
-    "#E0BBE4", # pastel lavender
-    "#F7CAC9", # blush pink
-    "#BFD8B8"  # pastel sage green
-  )
-
-  # Build a D3 ordinal scale string
-  colourScale <- sprintf(
-    'd3.scaleOrdinal().domain(%s).range(%s)',
-    jsonlite::toJSON(id, auto_unbox = TRUE),
-    jsonlite::toJSON(pal[seq_along(id)], auto_unbox = TRUE)
-  )
-
-  return(colourScale)
 }
 
 #' Render a step-package Sankey diagram
@@ -153,23 +157,7 @@ make_colours <- function(id) {
 #'   [make_nodes()].
 #' @param links Data frame describing connections between nodes, typically the
 #'   output of [make_links()].
-#' @param colours JavaScript colour scale generated by [make_colours()].
-#' @param font_size Node label font size in pixels.
-#' @param link_alpha Default opacity applied to all links when
-#'   `value_scaled_alpha` is `FALSE`.
-#' @param value_scaled_alpha Should link opacity be scaled according to its
-#'   value?
-#' @param alpha_range Numeric range to use when scaling link opacity by value.
-#' @param node_width Width of each node rectangle in pixels. Use `NULL` to keep
-#'   the networkD3 default.
-#' @param split_newlines Should newline characters in labels be converted into
-#'   stacked `<tspan>` elements for readability?
-#' @param center_labels Should text labels be horizontally centred on each
-#'   node?
-#' @param place_labels_above When `TRUE`, nudges labels above the node
-#'   rectangle.
-#' @param label_y_offset Vertical offset (in pixels) used when moving labels
-#'   above the node.
+#' @param ... Addtional arguments to pass to [networkD3::sankeyNetwork()]
 #'
 #' @return An htmlwidgets object produced by
 #'   [networkD3::sankeyNetwork()].
@@ -177,171 +165,24 @@ make_colours <- function(id) {
 make_sankey <- function(
     nodes,
     links,
-    colours,
-    font_size = 14,                 # px
-    link_alpha = 0.35,              # 0..1 (used if value_scaled_alpha = FALSE)
-    value_scaled_alpha = FALSE,     # if TRUE, alpha scaled by link value
-    alpha_range = c(0.2, 0.8),      # used when value_scaled_alpha = TRUE
-    node_width = 30,                # NULL = leave as-is, or numeric px e.g. 30
-    split_newlines = TRUE,          # turn '\n' in labels into stacked <tspan> lines
-    center_labels = TRUE,           # horizontally centre labels on each node
-    place_labels_above = FALSE,     # if TRUE, nudge text above node
-    label_y_offset = -6             # px shift when placing above
+    ...
 ) {
-  stopifnot(length(alpha_range) == 2)
 
-  sn <- networkD3::sankeyNetwork(
-    Links  = dplyr::filter(links, !is.na(.data$next_package)),
+  networkD3::sankeyNetwork(
+    Links  = links,
     Nodes  = nodes,
     Source = "source",
     Target = "target",
     Value  = "value",
     NodeID = "node_name",
-    NodeGroup = "id",
-    LinkGroup = "id",
-    colourScale = colours,
-    width = "100%"
-  )
-
-  sn$x$links$tooltip <- dplyr::filter(links, !is.na(.data$next_package))$tooltip
-  sn$x$nodes$p <- nodes$p
-
-  js_bool <- function(x) if (isTRUE(x)) "true" else "false"
-  js_num_or_null <- function(x) if (is.null(x)) "null" else as.character(x)
-
-  js <- sprintf('
-function(el, x) {
-
-  function applyLineBreaks(sel) {
-    if (!%s) return;
-    sel.each(function(){
-      var self = d3.select(this);
-      var text = self.text();
-      if (text && text.indexOf("\\n") > -1) {
-        var lines = text.split("\\n");
-        self.text(null);
-        for (var i = 0; i < lines.length; i++) {
-          self.append("tspan")
-              .text(lines[i])
-              .attr("x", null)
-              .attr("dy", i === 0 ? 0 : "1.2em");
-        }
-      }
-    });
-  }
-
-  function setNodeWidth() {
-    var desired = %s; // null or number
-    if (desired === null) return;
-    d3.select(el).selectAll(".node rect").attr("width", desired);
-  }
-
-  function recenterLabels() {
-    var firstRect = d3.select(el).select(".node rect");
-    if (firstRect.empty()) return;
-    var nodeWidth = +firstRect.attr("width") || 24;
-
-    var texts = d3.select(el).selectAll(".node text");
-
-    if (%s) {
-      texts.attr("text-anchor", "middle")
-           .attr("x", nodeWidth / 2);
-      d3.select(el).selectAll(".node text tspan")
-           .attr("x", nodeWidth / 2);
-    }
-
-    if (%s) {
-      texts.attr("y", %d);
-    }
-
-    texts.style("font-size", "%dpx");
-  }
-
-  function setLinkOpacity() {
-    var links = d3.select(el).selectAll(".link");
-
-    if (%s) {
-      var vals = (x.links || []).map(function(d){ return +d.value; }).filter(isFinite);
-      if (vals.length) {
-        var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
-        if (min === max) {
-          links.style("stroke-opacity", %f);
-        } else {
-          var lin = (d3.scaleLinear || d3.scale.linear);
-          var op  = lin().domain([min, max]).range([%f, %f]);
-          links.style("stroke-opacity", function(d){ return op(+d.value); });
-        }
-      }
-    } else {
-      links.style("stroke-opacity", %f);
-    }
-  }
-
-  function setLinkTooltips() {
-    var linkSel = d3.select(el).selectAll(".link");
-    linkSel.select("title").remove();
-    linkSel.append("title")
-      .text(function(d){
-        if (typeof d.tooltip !== "undefined" && d.tooltip !== null) return d.tooltip;
-        var fmt = (d3.format ? d3.format(",.0f") : function(x){return x;});
-        var src = d.source && d.source.name ? d.source.name : "";
-        var tgt = d.target && d.target.name ? d.target.name : "";
-        return src + " \\u2192 " + tgt + "\\n" + fmt(+d.value);
-      });
-  }
-
-  // NEW: Node titles from x.nodes[*].p, aligned by d.index
-  function setNodeTooltipsFromNodesP() {
-    var nodesSel = d3.select(el).selectAll(".node");
-
-    // Remove any default titles (which show name + value)
-    nodesSel.selectAll("title").remove();
-    nodesSel.selectAll("rect title").remove();
-
-    nodesSel.selectAll("rect").each(function(d){
-      var p = "";
-      if (d && typeof d.index !== "undefined" && x.nodes && x.nodes[d.index]) {
-        var v = x.nodes[d.index].p;
-        if (v !== null && typeof v !== "undefined") p = String(v);
-      } else if (d && typeof d.p !== "undefined" && d.p !== null) {
-        // fallback in case the sankey lib copied the field onto d
-        p = String(d.p);
-      }
-      d3.select(this).append("title").text(p);
-    });
-  }
-
-  function applyAll() {
-    var texts = d3.select(el).selectAll(".node text");
-    applyLineBreaks(texts);
-    setNodeWidth();
-    recenterLabels();
-    setLinkOpacity();
-    setLinkTooltips();
-    setNodeTooltipsFromNodesP();   // <-- apply node p-tooltips
-  }
-
-  // First pass
-  applyAll();
-
-  var svg = el.querySelector("svg");
-  if (svg) svg.removeAttribute("viewBox");
-
-  // Ensure persistence after layout/transition
-  requestAnimationFrame(applyAll);
-  setTimeout(applyAll, 80);
-}
-',
-js_bool(split_newlines),
-js_num_or_null(node_width),
-js_bool(center_labels),
-js_bool(place_labels_above), as.integer(label_y_offset),
-as.integer(font_size),
-js_bool(value_scaled_alpha),
-as.numeric(link_alpha),
-as.numeric(alpha_range[1]), as.numeric(alpha_range[2]),
-as.numeric(link_alpha)
-  )
-
-  htmlwidgets::onRender(sn, js)
+    NodeGroup = "package_id",
+    LinkGroup = "package_id",
+    colourScale = make_colour_scale(),
+    ...
+  ) |>
+    add_linebreaks_in_labels() |>
+    center_node_labels() |>
+    add_link_tooltips(links$tooltip) |>
+    add_node_tooltips(nodes$tooltip) |>
+    remove_ghost()
 }

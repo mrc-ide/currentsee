@@ -4,7 +4,7 @@
 \alias{make_links}
 \title{Build link definitions between Sankey nodes}
 \usage{
-make_links(x, nodes = make_nodes(x))
+make_links(x, nodes = make_nodes(x), down = FALSE)
 }
 \arguments{
 \item{x}{A data frame containing at least \code{id}, \code{step}, and \code{package}
@@ -12,6 +12,8 @@ columns describing package transitions for each simulation run.}
 
 \item{nodes}{Optional nodes data frame as returned by \code{\link[=make_nodes]{make_nodes()}}. If
 omitted the nodes are derived from \code{x}.}
+
+\item{down}{Logical indicator if moving up or down frontier}
 }
 \value{
 A tibble describing links between nodes including \code{source},
