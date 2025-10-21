@@ -111,7 +111,19 @@ ui <- navbarPage(
         )
       )
     )
-  )
+  ),
+  # ----------------------------------------------------------------------------
+
+  # Page 4: Modelling team -----------------------------------------------------
+  tabPanel(
+    "Modelling team",
+    fluidPage(
+      bslib::card(
+        p("This work is a collaborative modelling project between SwissTPH and
+          Imperial College London. The modelling teams consist of:")
+      )
+    )
+  ),
   # ----------------------------------------------------------------------------
 )
 

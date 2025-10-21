@@ -79,9 +79,9 @@ simulate_single <- function(int, current, weights, id = NULL) {
 #' @export
 simulate <- function(
     n,
-    int = c("cm", "itn", "smc", "vx", "irs"),
+    int = c("cm", "itn", "irs", "chem", "vaccine"),
     current = c("cm", "itn"),
-    weights = c(itn = 0.6, smc = 0.4, vx = 0.2, irs = 0.5)
+    weights = c(itn = 0.6, chem = 0.4, vaccine = 0.2, irs = 0.5)
 ) {
   if (length(n) != 1 || !is.numeric(n) || is.na(n) || n < 1) {
     stop("`n` must be a positive integer of length 1.")
@@ -104,7 +104,11 @@ simulate <- function(
   df <- lapply(seq_len(n), function(x, ...) {
     simulate_single(id = x, ...)
   }, int = int, current = current, weights = weights) |>
-    dplyr::bind_rows()
+    dplyr::bind_rows() |>
+    dplyr::mutate(
+      current = .data$package[.data$step == 0],
+      .by = "id"
+    )
 
   dplyr::as_tibble(df)
 }

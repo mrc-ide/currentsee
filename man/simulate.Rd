@@ -6,9 +6,9 @@
 \usage{
 simulate(
   n,
-  int = c("cm", "itn", "smc", "vx", "irs"),
+  int = c("cm", "itn", "irs", "chem", "vaccine"),
   current = c("cm", "itn"),
-  weights = c(itn = 0.6, smc = 0.4, vx = 0.2, irs = 0.5)
+  weights = c(itn = 0.6, chem = 0.4, vaccine = 0.2, irs = 0.5)
 )
 }
 \arguments{
