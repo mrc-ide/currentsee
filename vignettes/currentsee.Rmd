@@ -81,7 +81,7 @@ With the inputs prepared we can render an interactive Sankey diagram directly
 in the RStudio viewer or an HTML document.
 
 ```{r sankey, out.width='100%'}
-make_sankey(nodes, links)
+make_sankey(nodes, links, height = "100%", width = "100%")
 
 ```
 
