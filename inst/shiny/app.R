@@ -119,8 +119,28 @@ ui <- navbarPage(
     "Modelling team",
     fluidPage(
       bslib::card(
-        p("This work is a collaborative modelling project between SwissTPH and
-          Imperial College London. The modelling teams consist of:")
+        class = "mb-3",
+        bslib::card_body(
+          h3("Meet the team"),
+          p(class = "text-muted", "Click to email, or view profiles.")
+        )
+      ),
+      br(),
+      br(),
+      bslib::layout_column_wrap(
+        width = 300, heights_equal = "all",
+        contact_card(
+          name = "Emilie Pothin",
+          role = "Senior Modeller",
+          org  = "SwissTPH",
+          email = "emilie.pothin@swisstph.ch"
+        ),
+        contact_card(
+          name = "Peter Winskill",
+          role = "Senior Modeller",
+          org  = "Imperial College London",
+          email = "p.winskill@imperial.ac.uk"
+        )
       )
     )
   ),
