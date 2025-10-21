@@ -61,15 +61,24 @@ use with <code><a href="https://rdrr.io/pkg/networkD3/man/sankeyNetwork.html" cl
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="simulate.html">simulate</a></span><span class="op">(</span><span class="fl">3</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">make_nodes</span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                    name             node_name tooltip package_id  colour</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1                    cm                    cm    100%          1 #AEC6CF</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2               cm, itn               cm\nitn    100%          8 #FFB347</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3          cm, itn, irs          cm\nitn\nirs   33.3%         11 #FF6961</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4          cm, itn, smc          cm\nitn\nsmc   66.7%       &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5     cm, itn, smc, irs     cm\nitn\nsmc\nirs   66.7%       &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6      cm, itn, smc, vx      cm\nitn\nsmc\nvx   33.3%       &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7 cm, itn, smc, vx, irs cm\nitn\nsmc\nvx\nirs    100%       &lt;NA&gt;    &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8                 ghost                  &lt;NA&gt;   ghost       &lt;NA&gt;    &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                          name                   node_name tooltip package_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                          cm                          cm    100%          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2                     cm, itn                     cm\nitn    100%          8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3               cm, itn, chem               cm\nitn\nchem   66.7%          9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4      cm, itn, chem, vaccine      cm\nitn\nchem\nvaccine   33.3%         10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5                cm, itn, irs                cm\nitn\nirs   33.3%         11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6          cm, itn, irs, chem          cm\nitn\nirs\nchem   66.7%         12</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7 cm, itn, irs, chem, vaccine cm\nitn\nirs\nchem\nvaccine    100%         13</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8                       ghost                        &lt;NA&gt;   ghost       &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    colour</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 #AEC6CF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 #FFB347</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 #F49AC2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 #FFDAC1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 #FF6961</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 #B5EAD7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7 #B5B9FF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8    &lt;NA&gt;</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
