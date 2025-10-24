@@ -106,8 +106,7 @@ ui <- navbarPage(
       bslib::card(
         class = "mb-3",
         bslib::card_body(
-          h3("Meet the team"),
-          p(class = "text-muted", "Click to email, or view profiles.")
+          h3("Meet the team")
         )
       ),
       br(),
@@ -116,15 +115,40 @@ ui <- navbarPage(
         width = 300, heights_equal = "all",
         contact_card(
           name = "Emilie Pothin",
-          role = "Senior Modeller",
+          role = "Project lead",
           org  = "SwissTPH",
           email = "emilie.pothin@swisstph.ch"
         ),
         contact_card(
           name = "Peter Winskill",
-          role = "Senior Modeller",
+          role = "Project lead",
           org  = "Imperial College London",
           email = "p.winskill@imperial.ac.uk"
+        ),
+        contact_card(
+          name = "Monica Golumbeanu",
+          role = "Senior Modeller",
+          org  = "SwissTPH"
+        ),
+        contact_card(
+          name = "Tom Brewer",
+          role = "Senior Modeller",
+          org  = "Imperial College London"
+        ),
+        contact_card(
+          name = "Leandro Gandos Brito",
+          role = "Methodology and implementation",
+          org  = "SwissTPH"
+        ),
+        contact_card(
+          name = "Dariya Nikitin",
+          role = "Methodology and implementation",
+          org  = "Imperial College London"
+        ),
+        contact_card(
+          name = "Daniela Olivera Mesa",
+          role = "App development",
+          org  = "Imperial College London"
         )
       )
     )
