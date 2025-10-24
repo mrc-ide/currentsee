@@ -1,0 +1,46 @@
+/* www/custom.css */.app-navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  margin: 0;
+  height: auto;
+}.app-navbar-brand img {
+  height: 55px;
+  width: auto;
+  flex-shrink: 0;
+}.app-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  min-width: 0; /* Allows text to shrink */
+}.app-brand-title {
+  font-size: 4.25rem;
+  font-weight: bold;
+  margin: 0;
+  white-space: nowrap;
+}.app-brand-subtitle {
+  font-size: 1.75rem;
+  opacity: 0.8;
+  margin: 0;
+}
+
+/* Navbar adjustments */.navbar-brand {
+  height: auto !important;
+  padding: 8px 15px !important;
+}.navbar {
+  min-height: 100px;
+}
+
+/* Responsive design */
+  @media (max-width: 992px) {.app-brand-subtitle {
+    font-size: 0.7rem;
+  }
+  }
+
+@media (max-width: 768px) {.app-brand-subtitle {
+  display: none;
+}.app-brand-title {
+  font-size: 1.1rem;
+}
+}

@@ -8,153 +8,167 @@ library(dplyr)
 library(tidyr)
 library(networkD3)
 
-ui <- navbarPage(
-  title = HTML(
-    '<div style="display:flex; align-items:center;">
-       <img src="M3CPI_transparent.png" style="height:35px; margin-right:10px;">
-       <div>M3CPI<br><small>modelling to inform malaria intervention prioritisation</small></div>
-     </div>'
-  ),
-  theme = shinytheme("sandstone"),
+ui <-
+  fluidPage(
+    # Include the external CSS
+    tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
+    ),
+    navbarPage(
+      title = div(
+        class = "app-navbar-brand",
+        img(src = "M3CPI_transparent.png", alt = "M3CPI Logo"),
+        div(
+          class = "app-brand-text",
+          div("M3CPI", class = "app-brand-title"),
+          div("modelling to inform malaria intervention prioritisation",
+              class = "app-brand-subtitle")
+        )
+      ),
+      theme = shinytheme("readable"),
 
-  # Page 1: Introduction -------------------------------------------------------
-  tabPanel(
-    "Introduction",
-    fluidPage(
-      bslib::card(
-        bslib::card_header("Welcome"),
-        p("This is a placeholder introduction. Briefly explain the purpose of the app,
-          data sources, and what users can do here."),
-        p("Add any context, scope, and caveats you want users to know before exploring.")
-      )
-    )
-  ),
-  # ----------------------------------------------------------------------------
 
-  # Page 2: How to interpret output --------------------------------------------
-  tabPanel(
-    "How to interpret output",
-    fluidPage(
-      bslib::card(
-        bslib::card_header("Reading the Sankey outputs"),
-        p("Placeholder guidance on interpreting the visualisations and metrics."),
-        tags$ul(
-          tags$li("What each node and link represents."),
-          tags$li("Direction of flow and sign conventions."),
-          tags$li("Any thresholds, filters, or assumptions to keep in mind.")
-        ),
-        p("You can expand this section later with examples and screenshots.")
-      )
-    )
-  ),
-  # ----------------------------------------------------------------------------
 
-  # Page 3: Output -------------------------------------------------------------
-  tabPanel(
-    "Explore",
-    fluidPage(
-      titlePanel("CE pathways"),
-      sidebarLayout(
-        sidebarPanel(
-          # Optional CSV upload ----------------------------------------------
-          fileInput(
-            "csv_upload",
-            "Upload CSV to replace default inputs",
-            accept = c(".csv", "text/csv", "text/comma-separated-values")
-          ),
-          tags$hr(),
-
-          # Dynamic filter inputs --------------------------------------------
-          uiOutput("dynamic_filters"),
-
-          width = 3
-        ),
-        mainPanel(
+      # Page 1: Introduction -------------------------------------------------------
+      tabPanel(
+        "Introduction",
+        fluidPage(
           bslib::card(
-            height = "620px",
-            bslib::navset_card_pill(
-              bslib::nav_panel(
-                "Decreasing spend",
-                networkD3::sankeyNetworkOutput(
-                  "sankey_down",
-                  height = "500px",
-                  width = "100%"
-                ),
-                h4("") # spacer to avoid scrollbars
+            bslib::card_header("Welcome"),
+            p("This is a placeholder introduction. Briefly explain the purpose of the app,
+          data sources, and what users can do here."),
+            p("Add any context, scope, and caveats you want users to know before exploring.")
+          )
+        )
+      ),
+      # ----------------------------------------------------------------------------
+
+      # Page 2: How to interpret output --------------------------------------------
+      tabPanel(
+        "How to interpret output",
+        fluidPage(
+          bslib::card(
+            bslib::card_header("Reading the Sankey outputs"),
+            p("Placeholder guidance on interpreting the visualisations and metrics."),
+            tags$ul(
+              tags$li("What each node and link represents."),
+              tags$li("Direction of flow and sign conventions."),
+              tags$li("Any thresholds, filters, or assumptions to keep in mind.")
+            ),
+            p("You can expand this section later with examples and screenshots.")
+          )
+        )
+      ),
+      # ----------------------------------------------------------------------------
+
+      # Page 3: Output -------------------------------------------------------------
+      tabPanel(
+        "Explore",
+        fluidPage(
+          h3("Cost-effective intervention pathways"),
+          br(),
+          br(),
+          sidebarLayout(
+            sidebarPanel(
+              # Dynamic filter inputs --------------------------------------------
+              uiOutput("dynamic_filters"),
+              br(),
+              br(),
+
+              # Optional CSV upload ----------------------------------------------
+              fileInput(
+                "csv_upload",
+                "Upload CSV to replace default inputs",
+                accept = c(".csv", "text/csv", "text/comma-separated-values")
               ),
-              bslib::nav_panel(
-                "Increasing spend",
-                networkD3::sankeyNetworkOutput(
-                  "sankey_up",
-                  height = "500px",
-                  width = "100%"
-                ),
-                h4("") # spacer to avoid scrollbars
+              width = 3
+            ),
+            mainPanel(
+              bslib::card(
+                height = "620px",
+                bslib::navset_card_pill(
+                  bslib::nav_panel(
+                    "Decreasing spend",
+                    br(),
+                    br(),
+                    networkD3::sankeyNetworkOutput(
+                      "sankey_down",
+                      height = "500px",
+                      width = "100%"
+                    ),
+                    h4("") # spacer to avoid scrollbars
+                  ),
+                  bslib::nav_panel(
+                    "Increasing spend",
+                    br(),
+                    br(),
+                    networkD3::sankeyNetworkOutput(
+                      "sankey_up",
+                      height = "500px",
+                      width = "100%"
+                    ),
+                    h4("") # spacer to avoid scrollbars
+                  )
+                )
               )
             )
           )
         )
-      )
-    )
-  ),
-  # ----------------------------------------------------------------------------
-
-  # Page 4: Modelling team -----------------------------------------------------
-  tabPanel(
-    "Modelling team",
-    fluidPage(
-      bslib::card(
-        class = "mb-3",
-        bslib::card_body(
-          h3("Meet the team")
-        )
       ),
-      br(),
-      br(),
-      bslib::layout_column_wrap(
-        width = 300, heights_equal = "all",
-        contact_card(
-          name = "Emilie Pothin",
-          role = "Project lead",
-          org  = "SwissTPH",
-          email = "emilie.pothin@swisstph.ch"
-        ),
-        contact_card(
-          name = "Peter Winskill",
-          role = "Project lead",
-          org  = "Imperial College London",
-          email = "p.winskill@imperial.ac.uk"
-        ),
-        contact_card(
-          name = "Monica Golumbeanu",
-          role = "Senior Modeller",
-          org  = "SwissTPH"
-        ),
-        contact_card(
-          name = "Tom Brewer",
-          role = "Senior Modeller",
-          org  = "Imperial College London"
-        ),
-        contact_card(
-          name = "Leandro Gandos Brito",
-          role = "Methodology and implementation",
-          org  = "SwissTPH"
-        ),
-        contact_card(
-          name = "Dariya Nikitin",
-          role = "Methodology and implementation",
-          org  = "Imperial College London"
-        ),
-        contact_card(
-          name = "Daniela Olivera Mesa",
-          role = "App development",
-          org  = "Imperial College London"
+      # ----------------------------------------------------------------------------
+
+      # Page 4: Modelling team -----------------------------------------------------
+      tabPanel(
+        "Modelling team",
+        fluidPage(
+          h3("Meet the team"),
+          br(),
+          br(),
+          bslib::layout_column_wrap(
+            width = 300, heights_equal = "all",
+            contact_card(
+              name = "Emilie Pothin",
+              role = "Project lead",
+              org  = "SwissTPH",
+              email = "emilie.pothin@swisstph.ch"
+            ),
+            contact_card(
+              name = "Peter Winskill",
+              role = "Project lead",
+              org  = "Imperial College London",
+              email = "p.winskill@imperial.ac.uk"
+            ),
+            contact_card(
+              name = "Monica Golumbeanu",
+              role = "Senior Modeller",
+              org  = "SwissTPH"
+            ),
+            contact_card(
+              name = "Tom Brewer",
+              role = "Senior Modeller",
+              org  = "Imperial College London"
+            ),
+            contact_card(
+              name = "Leandro Gandos Brito",
+              role = "Methodology and implementation",
+              org  = "SwissTPH"
+            ),
+            contact_card(
+              name = "Dariya Nikitin",
+              role = "Methodology and implementation",
+              org  = "Imperial College London"
+            ),
+            contact_card(
+              name = "Daniela Olivera Mesa",
+              role = "App development",
+              org  = "Imperial College London"
+            )
+          )
         )
       )
+      # ----------------------------------------------------------------------------
     )
   )
-  # ----------------------------------------------------------------------------
-)
 
 
 server <- function(input, output, session) {
