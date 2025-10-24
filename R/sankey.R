@@ -17,39 +17,68 @@ NULL
 make_nodes <- function(x) {
   stopifnot("package" %in% names(x))
 
-  nodes <- data.frame(
-    name = sort(unique(x$package)),
-    stringsAsFactors = FALSE
-  )
+  # Get unique packages and create base nodes
+  unique_packages <- sort(unique(x$package))
 
-  nodes$node_name <- vapply(
-    nodes$name,
-    function(value) gsub(", ", "\n", value, fixed = TRUE),
-    character(1)
-  )
+  denominator <- max(table(x$package))
 
-  denominator = max(table(x$package))
-
-  prop <-  x |>
-    dplyr::summarise(
-      n = dplyr::n(),
-      .by = c("step", "package")
-    ) |>
+  # Calculate proportions more efficiently
+  package_props <- x |>
+    dplyr::count(.data$step, .data$package, name = "n") |>
     dplyr::mutate(
-      tooltip = paste0(round(100 * .data$n / denominator, 1), "%"),
-      .by = c("step")
+      tooltip = paste0(round(100 * .data$n / denominator, 1), "%")
     ) |>
-    dplyr::rename("name" = "package") |>
-    dplyr::select("name", "tooltip")
+    dplyr::select("package", "tooltip") |>
+    dplyr::distinct()
 
-  nodes <- nodes |>
-    dplyr::left_join(prop, by = "name") |>
-    dplyr::left_join(currentsee::package_id, by = c("name" = "package"))
-
-  nodes <- dplyr::bind_rows(nodes,
-                 data.frame(name = "ghost", tooltip = "ghost"))
+  # Build final nodes data frame
+  nodes <- tibble::tibble(
+    name = unique_packages,
+    node_name = gsub(", ", "\n", unique_packages, fixed = TRUE)
+  ) |>
+    dplyr::left_join(package_props, by = c("name" = "package")) |>
+    dplyr::left_join(currentsee::package_id, by = c("name" = "package")) |>
+    dplyr::bind_rows(tibble::tibble(name = "ghost", tooltip = "ghost")) |>
+    as.data.frame()
 
   nodes
+}
+
+
+#' Calculate package differences between two package sets
+#'
+#' Computes the difference between two sets of comma-separated package strings,
+#' identifying which packages were added or removed when transitioning from one
+#' package combination to another. Useful for tracking package changes in
+#' step-wise analyses or Sankey diagram workflows.
+#'
+#' @param from_pkg Character vector. Source package combinations as comma-separated
+#'   strings (e.g., "pkg1, pkg2, pkg3").
+#' @param to_pkg Character vector. Target package combinations as comma-separated
+#'   strings. Must be the same length as `from_pkg`.
+#' @param direction Character string. Direction of comparison, either `"add"`
+#'   (default) to find packages in `to_pkg` but not in `from_pkg`, or `"remove"`
+#'   to find packages in `from_pkg` but not in `to_pkg`.
+#'
+#' @return Character vector of the same length as input vectors. Each element
+#'   contains the comma-separated list of package differences, or `NA_character_`
+#'   if `to_pkg` contains `NA` values.
+calc_package_diff <- function(from_pkg, to_pkg, direction = "add") {
+  purrr::map2_chr(
+    strsplit(from_pkg, ",\\s*"),
+    strsplit(to_pkg, ",\\s*"),
+    ~ {
+      if (any(is.na(.y))) return(NA_character_)
+
+      diff_packages <- if (direction == "add") {
+        setdiff(.y,.x)
+      } else {
+        setdiff(.x,.y)
+      }
+
+      paste(diff_packages, collapse = ", ")
+    }
+  )
 }
 
 #' Build link definitions between Sankey nodes
@@ -65,6 +94,7 @@ make_nodes <- function(x) {
 #'
 #' @export
 make_links <- function(x, nodes = make_nodes(x), down = FALSE) {
+  # Validation
   required_cols <- c("id", "step", "package")
   missing <- setdiff(required_cols, names(x))
   if (length(missing) > 0) {
@@ -75,80 +105,44 @@ make_links <- function(x, nodes = make_nodes(x), down = FALSE) {
     stop("`nodes` must contain a `name` column.")
   }
 
+  # Prepare data
   node_lookup <- nodes$name
 
-  if(down){
-    x$step = abs(x$step)
-  }
-
-  x <- x |>
+  processed_data <- x |>
+    dplyr::mutate(step = if (down) abs(.data$step) else .data$step) |>
     dplyr::arrange(.data$id, .data$step) |>
     dplyr::mutate(
-      next_package = dplyr::lead(.data$package),
-      next_step = dplyr::lead(.data$step),
-      .by = "id"
+      next_package = dplyr::coalesce(dplyr::lead(.data$package, 1), "ghost"),.by = "id"
     ) |>
-    dplyr::mutate(
-      next_package = ifelse(is.na(.data$next_package), "ghost", .data$next_package)
-    ) |>
-    dplyr::summarise(
-      value = dplyr::n(),
-      .by = c("package", "next_package", "step")
-    ) |>
+    dplyr::count(.data$package, .data$next_package, .data$step, name = "value") |>
     dplyr::mutate(
       source = match(.data$package, node_lookup) - 1L,
       target = match(.data$next_package, node_lookup) - 1L,
       label = gsub(", ", "\n", .data$package, fixed = TRUE),
-      id = as.character(.data$source)
+      id = as.character(source)
     )
 
-  if(down){
-    x <- x |>
-      dplyr::mutate(
-      change = purrr::map2_chr(
-        strsplit(.data$next_package, ",\\s*"),
-        strsplit(.data$package, ",\\s*"),
-        ~ {
-          if (any(is.na(.y))) {
-            return(NA_character_)
-          }
-          new <- setdiff(.y, .x)
-          paste(new, collapse = ", ")
-        }
-      )
-    ) |>
-      dplyr::mutate(
-        tooltip = paste0("\u2192: remove ", .data$change),
-        tooltip = ifelse(.data$next_package == "ghost", "NA", .data$tooltip)
-      )
-  } else {
-    x <- x |>
-      dplyr::mutate(
-        change = purrr::map2_chr(
-          strsplit(.data$package, ",\\s*"),
-          strsplit(.data$next_package, ",\\s*"),
-          ~ {
-            if (any(is.na(.y))) {
-              return(NA_character_)
-            }
-            new <- setdiff(.y, .x)
-            paste(new, collapse = ", ")
-          }
-        )
-      ) |>
-      dplyr::mutate(
-        tooltip = paste0("\u2192: add ", .data$change),
-        tooltip = ifelse(.data$next_package == "ghost", "NA", .data$tooltip)
-      )
-  }
-
-  x |>
+  # Add direction-specific tooltips
+  result <- processed_data |>
     dplyr::mutate(
-      p = paste0(round(100 * .data$value / sum(.data$value), 1), "%"),
-      .by = "step"
-    )  |>
-    dplyr::left_join(currentsee::package_id, by = c("package")) |>
+      change = if (down) {
+        # For decreasing spend: what was removed (in package but not in next_package)
+        calc_package_diff(.data$package, .data$next_package, "remove")
+      } else {
+        # For increasing spend: what was added (in next_package but not in package)
+        calc_package_diff(.data$package, .data$next_package, "add")
+      },
+      tooltip = dplyr::case_when(
+        next_package == "ghost" ~ "NA",
+        down ~ paste0("\u2192: remove ", change),
+        TRUE ~ paste0("\u2192: add ", change)
+      ),
+      p = paste0(round(100 * .data$value / sum(.data$value), 1), "%"), .by = "step"
+    ) |>
+    dplyr::left_join(currentsee::package_id, by = "package") |>
     as.data.frame()
+
+  result
 }
 
 #' Render a step-package Sankey diagram

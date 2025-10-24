@@ -20,7 +20,9 @@ Imports:
     shiny,
     rlang,
     jsonlite,
-    htmltools
+    htmltools,
+    bslib,
+    tibble
 Suggests:
     knitr,
     qpdf,
