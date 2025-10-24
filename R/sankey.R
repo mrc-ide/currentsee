@@ -112,7 +112,8 @@ make_links <- function(x, nodes = make_nodes(x), down = FALSE) {
     dplyr::mutate(step = if (down) abs(.data$step) else .data$step) |>
     dplyr::arrange(.data$id, .data$step) |>
     dplyr::mutate(
-      next_package = dplyr::coalesce(dplyr::lead(.data$package, 1), "ghost"),.by = "id"
+      next_package = dplyr::lead(.data$package, 1, default = "ghost"),
+      .by = "id"
     ) |>
     dplyr::count(.data$package, .data$next_package, .data$step, name = "value") |>
     dplyr::mutate(

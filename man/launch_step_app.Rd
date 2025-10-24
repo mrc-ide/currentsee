@@ -4,14 +4,11 @@
 \alias{launch_step_app}
 \title{Launch the interactive step-package Sankey application}
 \usage{
-launch_step_app(df, group_cols = character())
+launch_step_app(df)
 }
 \arguments{
 \item{df}{Data frame containing at least \code{id}, \code{step}, and \code{package}
 columns describing transitions.}
-
-\item{group_cols}{Optional character vector of column names that should be
-exposed as filters in the sidebar.}
 }
 \value{
 No return value; the function launches a Shiny application.

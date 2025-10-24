@@ -1,6 +1,5 @@
 opts <- getOption("currentsee.app")
 df <- opts$df
-group_cols <- opts$group_cols
 
 library(shiny)
 library(bslib)
@@ -57,33 +56,23 @@ ui <- navbarPage(
       titlePanel("CE pathways"),
       sidebarLayout(
         sidebarPanel(
-          # Optional CSV upload ------------------------------------------------
+          # Optional CSV upload ----------------------------------------------
           fileInput(
             "csv_upload",
             "Upload CSV to replace default inputs",
             accept = c(".csv", "text/csv", "text/comma-separated-values")
           ),
           tags$hr(),
-          # --------------------------------------------------------------------
 
-          # Grouping column secection ------------------------------------------
-          selectInput(
-            "group_cols",
-            "Select grouping columns:",
-            choices = names(df),     # initial choices from default df
-            selected = NULL,
-            multiple = TRUE
-          ),
-          tags$hr(),
-          # --------------------------------------------------------------------
+          # Dynamic filter inputs --------------------------------------------
           uiOutput("dynamic_filters"),
+
           width = 3
         ),
         mainPanel(
           bslib::card(
             height = "620px",
             bslib::navset_card_pill(
-              # Sankey display for increasing spend ----------------------------
               bslib::nav_panel(
                 "Decreasing spend",
                 networkD3::sankeyNetworkOutput(
@@ -91,11 +80,8 @@ ui <- navbarPage(
                   height = "500px",
                   width = "100%"
                 ),
-                h4("") # Empty line gets rid of unnecessary vertical scroll bar
+                h4("") # spacer to avoid scrollbars
               ),
-              # ----------------------------------------------------------------
-
-              # Sankey display for decreasing spend ----------------------------
               bslib::nav_panel(
                 "Increasing spend",
                 networkD3::sankeyNetworkOutput(
@@ -103,9 +89,8 @@ ui <- navbarPage(
                   height = "500px",
                   width = "100%"
                 ),
-                h4("") # Empty line gets rid of unnecessary vertical scroll bar
+                h4("") # spacer to avoid scrollbars
               )
-              # ----------------------------------------------------------------
             )
           )
         )
@@ -143,7 +128,7 @@ ui <- navbarPage(
         )
       )
     )
-  ),
+  )
   # ----------------------------------------------------------------------------
 )
 
@@ -151,18 +136,20 @@ ui <- navbarPage(
 server <- function(input, output, session) {
 
   # ---------------------------------------------------------------------------
-  # 1. Store the working data frame that the rest of the app will use.
-  #    - Starts as the default df from global.
-  #    - If user uploads a CSV, we replace it (after checking it looks valid).
+  # 0. Columns we consider "core" to Sankey construction.
+  #    Everything NOT in this list will become a filter dropdown automatically.
+  #    Adjust this list to match what make_nodes / make_links require.
+  # ---------------------------------------------------------------------------
+  core_cols <- c("id", "step", "package", "next_package", "cost", "impact")
+
+  # ---------------------------------------------------------------------------
+  # 1. Working dataset.
+  #    Starts as df from opts, replaced on upload after validation.
   # ---------------------------------------------------------------------------
   df_current <- reactiveVal(df)
 
-
   # ---------------------------------------------------------------------------
-  # 2. Handle CSV upload.
-  #    - Read uploaded CSV.
-  #    - Check for required columns before accepting it.
-  #    - If something critical is missing, show a modal and DO NOT update df_current().
+  # 2. Handle CSV upload with sanity checks.
   # ---------------------------------------------------------------------------
   observeEvent(input$csv_upload, {
     req(input$csv_upload)
@@ -172,12 +159,10 @@ server <- function(input, output, session) {
       error = function(e) NULL
     )
 
-    # Basic sanity checks
-    required_cols <- c("step", "current")  # add more if you need them
+    required_cols <- c("step", "current")  # minimal cols to proceed
     missing_cols <- setdiff(required_cols, names(d_new))
 
     if (is.null(d_new) || length(missing_cols) > 0) {
-
       showModal(modalDialog(
         title = "Upload error",
         paste0(
@@ -188,73 +173,66 @@ server <- function(input, output, session) {
         easyClose = TRUE,
         footer = modalButton("OK")
       ))
-
       return(NULL)
     }
 
-    # Passed checks -> adopt this data
     df_current(d_new)
   })
 
 
   # ---------------------------------------------------------------------------
-  # 3. Keep the 'group_cols' selector in sync with the current data.
-  #    - Whenever df_current() changes (eg after upload), update choices.
-  #    - If column 'current' exists, pre-select it.
+  # 3. filter_vars(): which columns should get dropdowns?
+  #    It's all non-core columns in the *current* data, excluding anything
+  #    that looks continuous/too granular if you want to be picky.
+  #    For now we include everything that's not in core_cols.
   # ---------------------------------------------------------------------------
-  observeEvent(df_current(), {
+  filter_vars <- reactive({
     d <- df_current()
-    cols <- names(d)
-
-    default_select <- if ("current" %in% cols) "current" else NULL
-
-    updateSelectInput(
-      session,
-      "group_cols",
-      choices  = cols,
-      selected = default_select
-    )
-  }, ignoreInit = FALSE)
+    setdiff(names(d), core_cols)
+  })
 
 
   # ---------------------------------------------------------------------------
-  # 4. Enforce that 'current' stays selected in group_cols (if present in data).
-  #    - Rationale: downstream plotting/validate expects input$current to exist.
-  #    - If user deselects it, we sneak it back in.
+  # 4. current_subset(): apply all active filter selections to df_current().
+  #    For each filter var v:
+  #       - if input[[v]] is NULL or "All", we don't filter on v
+  #       - otherwise we keep only rows matching that value
   # ---------------------------------------------------------------------------
-  observeEvent(input$group_cols, {
+  current_subset <- reactive({
     d <- df_current()
+    fvars <- filter_vars()
 
-    if ("current" %in% names(d)) {
-      if (is.null(input$group_cols) || !"current" %in% input$group_cols) {
-        updateSelectInput(
-          session,
-          "group_cols",
-          selected = c("current", input$group_cols)
-        )
+    if (length(fvars) == 0) {
+      return(d)
+    }
+
+    for (v in fvars) {
+      sel <- input[[v]]
+      if (!is.null(sel) && sel != "All") {
+        d <- d[d[[v]] == sel, , drop = FALSE]
       }
     }
-  }, ignoreInit = TRUE)
+
+    d
+  })
 
 
   # ---------------------------------------------------------------------------
-  # 5. Render the dynamic filter dropdowns in the sidebar.
-  #    - For each selected grouping column (group_cols),
-  #      create a selectInput with choices from that column in df_current().
-  #    - Include "All" which means "don't filter on this column".
-  #    - This UI will re-render whenever df_current() OR input$group_cols changes.
+  # 5. Render the dynamic filter dropdowns initially.
+  #    We create one selectInput per filter var.
+  #    Each starts at "All".
+  #    (We'll keep them in sync in the observer below.)
   # ---------------------------------------------------------------------------
   output$dynamic_filters <- renderUI({
     d <- df_current()
-    gcs <- if (is.null(input$group_cols)) character() else input$group_cols
+    fvars <- filter_vars()
 
-    lapply(gcs, function(gc) {
-      vals <- if (gc %in% names(d)) d[[gc]] else character()
-      choices <- c("All", sort(unique(as.character(vals))))
+    lapply(fvars, function(v) {
+      vals <- sort(unique(as.character(d[[v]])))
       selectInput(
-        inputId   = gc,
-        label     = gc,          # could map to a nicer label later
-        choices   = choices,
+        inputId   = v,
+        label     = v,
+        choices   = c("All", vals),
         selected  = "All",
         selectize = TRUE
       )
@@ -263,54 +241,72 @@ server <- function(input, output, session) {
 
 
   # ---------------------------------------------------------------------------
-  # 6. Capture the *current values* chosen in each of the dynamic dropdowns.
-  #    - Returns a named list like list(region = "West", year="2024", current="LLINs")
-  #    - Crucial trick: because we explicitly touch input[[gc]] here,
-  #      this reactive will update whenever ANY dropdown value changes.
+  # 6. Keep dropdowns mutually consistent.
+  #
+  #    Idea:
+  #    - For each filter var v, we update its choices based on all the OTHER
+  #      filters' current selections.
+  #
+  #    Why not just use current_subset() for all of them?
+  #    Because that would lock v to its existing selection immediately.
+  #    Instead, for each v we:
+  #       1. start from full df_current()
+  #       2. apply all filters EXCEPT v
+  #       3. whatever unique values remain in column v become its allowed choices
+  #
+  #    We also try to keep your current selection if it's still valid.
   # ---------------------------------------------------------------------------
-  filter_values <- reactive({
-    gcs <- input$group_cols
-    if (is.null(gcs) || length(gcs) == 0) {
-      return(list())
+  observe({
+    d_full <- df_current()
+    fvars  <- filter_vars()
+
+    # Nothing to do if we don't have any filter vars yet (e.g. before upload).
+    if (length(fvars) == 0) {
+      return(NULL)
     }
 
-    vals <- lapply(gcs, function(gc) input[[gc]])
-    names(vals) <- gcs
-    vals
+    for (v in fvars) {
+
+      # Build "partial subset" applying all filters except v
+      d_partial <- d_full
+      for (u in fvars) {
+        if (u == v) next
+        sel_u <- input[[u]]
+        if (!is.null(sel_u) && sel_u != "All") {
+          d_partial <- d_partial[d_partial[[u]] == sel_u, , drop = FALSE]
+        }
+      }
+
+      # Valid choices for v under other filters
+      poss_vals <- sort(unique(as.character(d_partial[[v]])))
+      poss_choices <- c("All", poss_vals)
+
+      # Keep current selection if it's still valid, else "All"
+      current_sel <- isolate(input[[v]])
+      if (is.null(current_sel) || !(current_sel %in% poss_choices)) {
+        current_sel <- "All"
+      }
+
+      updateSelectInput(
+        session,
+        inputId  = v,
+        choices  = poss_choices,
+        selected = current_sel
+      )
+    }
   })
 
 
   # ---------------------------------------------------------------------------
-  # 7. Build the filtered dataset and all Sankey inputs.
-  #    - Depends on df_current(), input$group_cols, and filter_values().
-  #    - Applies each filter unless the chosen value is "All".
-  #    - Splits data into "up" (step >= 0) and "down" (step <= 0).
-  #    - Calls your helper functions to build nodes/links for each.
-  #
-  #    Returns a list with:
-  #      $nodes_up, $links_up, $nodes_down, $links_down
-  #
-  #    Anything downstream (plots, downloads, etc) just calls filtered()$whatever.
+  # 7. Helper: given a subsetted df, build the Sankey node/link inputs.
+  #    - Split into up/down by step sign
+  #    - Call your helper fns
+  #    Returns a list(nodes_up, links_up, nodes_down, links_down)
   # ---------------------------------------------------------------------------
-  filtered <- reactive({
-    d <- df_current()
+  sankey_inputs <- reactive({
+    d <- current_subset()
 
-    gcs  <- input$group_cols
-    vals <- filter_values()
-
-    # Apply filters for each chosen grouping column,
-    # skipping columns set to "All".
-    if (!is.null(gcs) && length(gcs) > 0) {
-      for (gc in gcs) {
-        this_val <- vals[[gc]]
-        if (!is.null(this_val) && this_val != "All") {
-          d <- d[d[[gc]] == this_val, , drop = FALSE]
-        }
-      }
-    }
-
-    # Defensive check: make sure "step" exists before subsetting.
-    # If it's missing, return empty structures so we don't hard-crash.
+    # If "step" is missing entirely, bail gracefully
     if (!("step" %in% names(d))) {
       return(list(
         nodes_down = data.frame(),
@@ -320,11 +316,9 @@ server <- function(input, output, session) {
       ))
     }
 
-    # Split into "increasing spend / impact" vs "decreasing"
     d_up   <- d[d$step >= 0, , drop = FALSE]
     d_down <- d[d$step <= 0, , drop = FALSE]
 
-    # Build node/link objects for networkD3
     nodes_up   <- make_nodes(d_up)
     links_up   <- make_links(d_up,   nodes_up)
 
@@ -341,25 +335,36 @@ server <- function(input, output, session) {
 
 
   # ---------------------------------------------------------------------------
-  # 8. Render the "Increasing spend" Sankey.
-  #    - We require that input$current exists AND is not "All".
-  #      (This ties back to steps 3 and 4 where we keep 'current' around.)
-  #    - If not satisfied, we show a friendly message instead of erroring.
+  # 8. Render "Increasing spend" Sankey.
+  #
+  #    We still require that "current" is pinned down sensibly,
+  #    because the story you're telling needs a specific 'current'
+  #    (or at least not "All").
+  #
+  #    current is in core_cols, not guaranteed to be in filter_vars,
+  #    so we read it out of the *subset*.
+  #
+  #    We'll accept this if there's exactly one non-NA current in the subset
+  #    and it's not "All".
   # ---------------------------------------------------------------------------
   output$sankey_up <- networkD3::renderSankeyNetwork({
+    d_use <- current_subset()
+
+    # Check current is defined sensibly in the subset
+    current_vals <- unique(as.character(d_use$current))
+    current_vals <- current_vals[!is.na(current_vals)]
     validate(
       need(
-        !is.null(input$current) &&
-          nzchar(input$current) &&
-          input$current != "All",
+        length(current_vals) == 1 && current_vals != "All",
         "Choose a value for ‘current’ in the left panel to show the Sankey."
+      ),
+      need(
+        nrow(d_use) > 0,
+        "No matching pathways for this combination of filters."
       )
     )
 
-    # 2. Get filtered Sankey inputs
-    f <- filtered()
-
-    # 3. Check that there is actually something to plot for the "up" view
+    f <- sankey_inputs()
     validate(
       need(
         nrow(f$links_up) > 0 && nrow(f$nodes_up) > 0,
@@ -367,7 +372,6 @@ server <- function(input, output, session) {
       )
     )
 
-    # 4. Draw it
     currentsee::make_sankey(
       f$nodes_up,
       f$links_up,
@@ -378,23 +382,25 @@ server <- function(input, output, session) {
 
 
   # ---------------------------------------------------------------------------
-  # 9. Render the "Decreasing spend" Sankey.
-  #    - Same validation logic as above.
+  # 9. Render "Decreasing spend" Sankey (mirror logic).
   # ---------------------------------------------------------------------------
   output$sankey_down <- networkD3::renderSankeyNetwork({
+    d_use <- current_subset()
+
+    current_vals <- unique(as.character(d_use$current))
+    current_vals <- current_vals[!is.na(current_vals)]
     validate(
       need(
-        !is.null(input$current) &&
-          nzchar(input$current) &&
-          input$current != "All",
+        length(current_vals) == 1 && current_vals != "All",
         "Choose a value for ‘current’ in the left panel to show the Sankey."
+      ),
+      need(
+        nrow(d_use) > 0,
+        "No matching pathways for this combination of filters."
       )
     )
 
-    # 2. Get filtered Sankey inputs
-    f <- filtered()
-
-    # 3. Check that there is actually something to plot for the "down" view
+    f <- sankey_inputs()
     validate(
       need(
         nrow(f$links_down) > 0 && nrow(f$nodes_down) > 0,
@@ -402,7 +408,6 @@ server <- function(input, output, session) {
       )
     )
 
-    # 4. Draw it
     currentsee::make_sankey(
       f$nodes_down,
       f$links_down,
