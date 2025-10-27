@@ -117,7 +117,49 @@ ui <-
       ),
       # ----------------------------------------------------------------------------
 
-      # Page 4: Modelling team -----------------------------------------------------
+      # Page 4: FAQs ---------------------------------------------------------------
+      tabPanel(
+        "FAQs",
+        fluidPage(
+          bslib::card(
+            # Each question and answer pair --------------------------
+            tags$div(
+              tags$span(
+                shiny::icon("lightbulb"),
+                tags$b(" What does the Sankey diagram show?")
+              ),
+              br(),
+              p("Each node represents an intervention or combination of interventions.
+           The links show how resources or impact shift between scenarios.
+           Thicker links indicate larger changes."),
+              br()
+            ),
+
+            tags$div(
+              tags$span(
+                shiny::icon("lightbulb"),
+                tags$b(" Why can’t I see a Sankey when I open the app?")
+              ),
+              p("You need to select a baseline 'current' value in the filters on the
+           left-hand side. Once you do, the Sankey will appear."),
+              br()
+            ),
+
+            tags$div(
+              tags$span(
+                shiny::icon("lightbulb"),
+                tags$b("  What does ‘No matching pathways’ mean?")
+              ),
+              p("This appears when your chosen filters return no data—try broadening
+           your selections or resetting one of the filters to 'All'."),
+              br()
+            )
+            # ---------------------------------------------------------
+          )
+        )
+      ),
+
+      # Page 5: Modelling team -----------------------------------------------------
       tabPanel(
         "Modelling team",
         fluidPage(
