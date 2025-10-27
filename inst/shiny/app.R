@@ -88,7 +88,7 @@ ui <-
                 height = "620px",
                 bslib::navset_card_pill(
                   bslib::nav_panel(
-                    "Decreasing spend",
+                    "Removing interventions",
                     br(),
                     br(),
                     networkD3::sankeyNetworkOutput(
@@ -99,7 +99,7 @@ ui <-
                     h4("") # spacer to avoid scrollbars
                   ),
                   bslib::nav_panel(
-                    "Increasing spend",
+                    "Adding interventions",
                     br(),
                     br(),
                     networkD3::sankeyNetworkOutput(
