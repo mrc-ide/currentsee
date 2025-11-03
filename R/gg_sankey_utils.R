@@ -24,7 +24,6 @@ sankey_sigmoid <- function(x1, x2, y1, y2, n_points = 5000) {
 #' @param node_width Numeric. Width of the node rectangles (default: 0.05)
 #'
 #' @return Data frame with node positions including Var, Freq, xmin, xmax, ymin, ymax, x_center, y_center
-
 calculate_node_positions <- function(dat, node_width = 0.05) {
   do.call("rbind", lapply(seq_along(dat), function(i) {
     gap <- nrow(dat) / 10
@@ -41,7 +40,7 @@ calculate_node_positions <- function(dat, node_width = 0.05) {
     table(valid_data) |>
       as.data.frame() |>
       cbind(xpos = i) |>
-      setNames(c("Var", "Freq", "xpos")) |>
+      stats::setNames(c("Var", "Freq", "xpos")) |>
       within({
         ymin <- c(0, head(cumsum(Freq + gap), -1))
         ymax <- cumsum(Freq + c(0, rep(gap, length(Freq) - 1)))
@@ -69,7 +68,7 @@ calculate_node_positions <- function(dat, node_width = 0.05) {
 #'
 #' @return Data frame with columns Var1, Var2, and Freq representing transitions
 calculate_flow_transitions <- function(dat) {
-  do.call("rbind", lapply(head(seq_along(dat), -1), function(i) {
+  do.call("rbind", lapply(utils::head(seq_along(dat), -1), function(i) {
     # Create a data frame of transitions, excluding rows where either value is NA
     transitions <- data.frame(
       Var1 = dat[[i]],
@@ -85,7 +84,7 @@ calculate_flow_transitions <- function(dat) {
 
     table(transitions$Var1, transitions$Var2) |>
       as.data.frame() |>
-      filter(Freq > 0)  # Only keep actual transitions
+      dplyr::filter(Freq > 0)  # Only keep actual transitions
   }))
 }
 
@@ -100,12 +99,14 @@ calculate_flow_transitions <- function(dat) {
 #' @return Data frame with detailed flow rendering data including color, xmin, xmax, ymin, ymax
 create_flow_curves <- function(df_f_positioned, gradient_resolution = 2000) {
   df_f_positioned |>
-    rowwise() |>
-    reframe(color = colorRampPalette(c(color_left, color_right))(gradient_resolution),
-            xmin = seq(xmax_left, xmin_right, length = gradient_resolution) - 0.001,
-            xmax = xmin + 0.002,
-            ymin = sankey_sigmoid(xmax_left, xmin_right, ymin_left, ymin_right, gradient_resolution),
-            ymax = sankey_sigmoid(xmax_left, xmin_right, ymax_left, ymax_right, gradient_resolution))
+    dplyr::rowwise() |>
+    dplyr::reframe(
+      color = grDevices::colorRampPalette(c(color_left, color_right))(gradient_resolution),
+      xmin = seq(xmax_left, xmin_right, length = gradient_resolution) - 0.001,
+      xmax = xmin + 0.002,
+      ymin = sankey_sigmoid(xmax_left, xmin_right, ymin_left, ymin_right, gradient_resolution),
+      ymax = sankey_sigmoid(xmax_left, xmin_right, ymax_left, ymax_right, gradient_resolution)
+    )
 }
 
 #' Prepare flow label positions
@@ -119,22 +120,22 @@ create_flow_curves <- function(df_f_positioned, gradient_resolution = 2000) {
 #' @return Data frame with flow label positions and text
 prepare_flow_labels <- function(df_f_positioned, flow_labels = NULL) {
   df_f_labels <- df_f_positioned |>
-    mutate(
+    dplyr::mutate(
       flow_distance = xmin_right - xmax_left,  # Distance between nodes
       x_center = xmax_left + (flow_distance * 0.01),  # 5% into the flow
       y_center = (ymin_left + ymax_left) / 2
     ) |>
-    select(Var1, Var2, x_center, y_center) |>
-    distinct()
+    dplyr::select(Var1, Var2, x_center, y_center) |>
+    dplyr::distinct()
 
   # Join with flow_labels if provided
   if(!is.null(flow_labels)) {
     df_f_labels <- df_f_labels |>
-      left_join(flow_labels, by = c("Var1" = "flow_start", "Var2" = "flow_end")) |>
-      mutate(display_label = coalesce(flow_label, paste(Var1, "→", Var2)))
+      dplyr::left_join(flow_labels, by = c("Var1" = "flow_start", "Var2" = "flow_end")) |>
+      dplyr::mutate(display_label = coalesce(flow_label, paste(Var1, "→", Var2)))
   } else {
     df_f_labels <- df_f_labels |>
-      mutate(display_label = paste(Var1, "→", Var2))
+      dplyr::mutate(display_label = paste(Var1, "→", Var2))
   }
 
   return(df_f_labels)
@@ -153,11 +154,11 @@ prepare_node_labels <- function(df_n, node_labels = NULL) {
   # Join with node_labels if provided
   if(!is.null(node_labels)) {
     df_n <- df_n |>
-      left_join(node_labels, by = c("Var" = "node")) |>
-      mutate(display_label = coalesce(label, Var))
+      dplyr::left_join(node_labels, by = c("Var" = "node")) |>
+      dplyr::mutate(display_label = dplyr::coalesce(label, Var))
   } else {
     df_n <- df_n |>
-      mutate(display_label = Var)
+      dplyr::mutate(display_label = Var)
   }
 
   return(df_n)
@@ -187,9 +188,11 @@ add_line_breaks_smart <- function(x, width = 80, break_words = FALSE) {
 
     if (break_words) {
       # Simple character-based breaking
-      chunks <- substring(string,
-                          seq(1, nchar(string), width),
-                          seq(width, nchar(string), width))
+      chunks <- substring(
+        string,
+        seq(1, nchar(string), width),
+        seq(width, nchar(string), width)
+      )
       return(paste(chunks, collapse = "\n"))
     }
 
@@ -239,7 +242,9 @@ add_line_breaks_smart <- function(x, width = 80, break_words = FALSE) {
 #'
 #' @export
 nodes_up <- function(dat){
-  up <- dat[,c("0", "1", "2", "3")]
+  up <- dat[,c("0", "1", "2", "3")] |>
+    dplyr::select(dplyr::where(~!all(is.na(.x))))
+
   up_nodes <- apply(up, 2, function(x){
     table(x) |>
       as.data.frame()
@@ -251,11 +256,12 @@ nodes_up <- function(dat){
     dplyr::select(x, label) |>
     dplyr::rename(node = x)
 
-  up <- up[,apply(up, 2, function(x){
-    !all(is.na(x))
-  })]
-
-  return(list(up = up, up_nodes = up_nodes))
+  return(
+    list(
+      up = up,
+      up_nodes = up_nodes
+    )
+  )
 }
 
 #' Process data for downward scaling Sankey diagram
@@ -274,7 +280,8 @@ nodes_up <- function(dat){
 #'
 #' @export
 nodes_down <- function(dat){
-  down <- dat[,c("0", "-1", "-2", "-3")]
+  down <- dat[,c("0", "-1", "-2", "-3")] |>
+    dplyr::select(dplyr::where(~!all(is.na(.x))))
 
   down_nodes <- apply(down, 2, function(x){
     table(x) |>
@@ -287,11 +294,13 @@ nodes_down <- function(dat){
     dplyr::select(x, label) |>
     dplyr::rename(node = x)
 
-  down <- down[,apply(down, 2, function(x){
-    !all(is.na(x))
-  })]
 
-  return(list(down = down, down_nodes = down_nodes))
+  return(
+    list(
+      down = down,
+      down_nodes = down_nodes
+    )
+  )
 }
 
 #' Create descriptive x-axis labels for intervention scaling
@@ -319,7 +328,9 @@ make_x_labs <- function(x){
   x <- as.numeric(x)
   names <- character(length(x))
   names[x == 0] <- "Current"
-  names[x > 0] <- paste("Add ", x[x > 0], "\nInterventions")
-  names[x < 0] <- paste("Remove ", abs(x[x < 0]), "\nInterventions")
+  names[x == 1] <- "Add 1\nintervention"
+  names[x == -1] <- "Remove 1\nintervention"
+  names[x > 1] <- paste("Add ", x[x > 1], "\ninterventions")
+  names[x < -1] <- paste("Remove ", abs(x[x < -1]), "\ninterventions")
   return(names)
 }

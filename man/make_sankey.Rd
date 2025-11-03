@@ -12,6 +12,7 @@ make_sankey(
   node_width = 0.05,
   node_label_font_size = 3,
   flow_label_font_size = 2.5,
+  x_label_font_size = 12,
   x_names = make_x_labs(names(dat)),
   flow_alpha = 0.3,
   gradient_res = 3000
@@ -31,6 +32,8 @@ make_sankey(
 \item{node_label_font_size}{Numeric. Font size for node labels (default: 3)}
 
 \item{flow_label_font_size}{Numeric. Font size for flow labels (default: 2.5)}
+
+\item{x_label_font_size}{Numeric. Font size for x-axis tick labels}
 
 \item{x_names}{Character vector. Labels for x-axis (column names by default)}
 

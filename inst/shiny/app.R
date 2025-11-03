@@ -27,8 +27,6 @@ ui <-
       ),
       theme = shinytheme("readable"),
 
-
-
       # Page 1: Introduction -------------------------------------------------------
       tabPanel(
         "Introduction",
