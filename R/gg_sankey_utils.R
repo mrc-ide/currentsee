@@ -1,3 +1,6 @@
+#' @importFrom rlang .data
+NULL
+
 #' Sigmoid interpolation function for smooth flow curves
 #'
 #' Creates smooth sigmoid curves for Sankey diagram flows using normal distribution.
@@ -11,7 +14,7 @@
 #'
 #' @return Numeric vector of interpolated y-coordinates
 sankey_sigmoid <- function(x1, x2, y1, y2, n_points = 5000) {
-  y1 + (y2 - y1) * pnorm(seq(x1, x2, len = n_points), (x1 + x2)/2, (x2 - x1)/6)
+  y1 + (y2 - y1) * stats::pnorm(seq(x1, x2, len = n_points), (x1 + x2)/2, (x2 - x1)/6)
 }
 
 
@@ -25,39 +28,45 @@ sankey_sigmoid <- function(x1, x2, y1, y2, n_points = 5000) {
 #'
 #' @return Data frame with node positions including Var, Freq, xmin, xmax, ymin, ymax, x_center, y_center
 calculate_node_positions <- function(dat, node_width = 0.05) {
-  do.call("rbind", lapply(seq_along(dat), function(i) {
+  rows <- lapply(seq_along(dat), function(i) {
     gap <- nrow(dat) / 10
-
-    # Remove NA values before creating table
     valid_data <- dat[[i]][!is.na(dat[[i]])]
 
-    if(length(valid_data) == 0) {
-      return(data.frame(Var = character(0), Freq = numeric(0),
-                        xpos = numeric(0), ymin = numeric(0),
-                        ymax = numeric(0), xmin = numeric(0), xmax = numeric(0)))
+    if (length(valid_data) == 0) {
+      return(data.frame(
+        Var = character(0), Freq = numeric(0),
+        ymin = numeric(0), ymax = numeric(0),
+        xmin = numeric(0), xmax = numeric(0),
+        x_center = numeric(0), y_center = numeric(0)
+      ))
     }
 
-    table(valid_data) |>
-      as.data.frame() |>
-      cbind(xpos = i) |>
-      stats::setNames(c("Var", "Freq", "xpos")) |>
-      within({
-        ymin <- c(0, head(cumsum(Freq + gap), -1))
-        ymax <- cumsum(Freq + c(0, rep(gap, length(Freq) - 1)))
-      }) |>
-      within({
-        ymin <- ymin - 0.5 * max(ymax)
-        ymax <- ymax - 0.5 * max(ymax)
-        xmin <- xpos - node_width
-        xmax <- xpos + node_width
-        # Calculate center positions for labels
-        x_center <- xpos
-        y_center <- (ymin + ymax) / 2
-        xpos <- NULL
-      })
-  }))
-}
+    df <- as.data.frame(table(valid_data))
+    names(df) <- c("Var", "Freq")
+    n <- nrow(df)
 
+    # gaps go BETWEEN bars:
+    cum_prev <- c(0, utils::head(cumsum(df$Freq), -1))       # sum of previous Freqs
+    gaps_prev <- (seq_len(n) - 1) * gap               # number of gaps before each bar
+    df$ymin <- cum_prev + gaps_prev
+    df$ymax <- df$ymin + df$Freq
+
+    # centre vertically
+    centre <- 0.5 * max(df$ymax)
+    df$ymin <- df$ymin - centre
+    df$ymax <- df$ymax - centre
+
+    # x extents and label centres
+    df$xmin <- i - node_width
+    df$xmax <- i + node_width
+    df$x_center <- i
+    df$y_center <- (df$ymin + df$ymax) / 2
+
+    df
+  })
+
+  do.call("rbind", rows)
+}
 
 #' Calculate flow transitions between columns
 #'
@@ -84,7 +93,7 @@ calculate_flow_transitions <- function(dat) {
 
     table(transitions$Var1, transitions$Var2) |>
       as.data.frame() |>
-      dplyr::filter(Freq > 0)  # Only keep actual transitions
+      dplyr::filter(.data$Freq > 0)  # Only keep actual transitions
   }))
 }
 
@@ -101,11 +110,24 @@ create_flow_curves <- function(df_f_positioned, gradient_resolution = 2000) {
   df_f_positioned |>
     dplyr::rowwise() |>
     dplyr::reframe(
-      color = grDevices::colorRampPalette(c(color_left, color_right))(gradient_resolution),
-      xmin = seq(xmax_left, xmin_right, length = gradient_resolution) - 0.001,
-      xmax = xmin + 0.002,
-      ymin = sankey_sigmoid(xmax_left, xmin_right, ymin_left, ymin_right, gradient_resolution),
-      ymax = sankey_sigmoid(xmax_left, xmin_right, ymax_left, ymax_right, gradient_resolution)
+      color = grDevices::colorRampPalette(
+        c(.data$color_left, .data$color_right)
+      )(gradient_resolution),
+
+      xmin = seq(.data$xmax_left, .data$xmin_right,
+                 length.out = gradient_resolution) - 0.001,
+      xmax = .data$xmin + 0.002,
+
+      ymin = sankey_sigmoid(
+        .data$xmax_left, .data$xmin_right,
+        .data$ymin_left, .data$ymin_right,
+        gradient_resolution
+      ),
+      ymax = sankey_sigmoid(
+        .data$xmax_left, .data$xmin_right,
+        .data$ymax_left, .data$ymax_right,
+        gradient_resolution
+      )
     )
 }
 
@@ -121,24 +143,29 @@ create_flow_curves <- function(df_f_positioned, gradient_resolution = 2000) {
 prepare_flow_labels <- function(df_f_positioned, flow_labels = NULL) {
   df_f_labels <- df_f_positioned |>
     dplyr::mutate(
-      flow_distance = xmin_right - xmax_left,  # Distance between nodes
-      x_center = xmax_left + (flow_distance * 0.01),  # 5% into the flow
-      y_center = (ymin_left + ymax_left) / 2
+      flow_distance = .data$xmin_right - .data$xmax_left,
+      x_center = .data$xmax_left + (.data$flow_distance * 0.01),
+      y_center = (.data$ymin_left + .data$ymax_left) / 2
     ) |>
-    dplyr::select(Var1, Var2, x_center, y_center) |>
+    dplyr::select(dplyr::all_of(c("Var1", "Var2", "x_center", "y_center"))) |>
     dplyr::distinct()
 
-  # Join with flow_labels if provided
-  if(!is.null(flow_labels)) {
+  if (!is.null(flow_labels)) {
     df_f_labels <- df_f_labels |>
-      dplyr::left_join(flow_labels, by = c("Var1" = "flow_start", "Var2" = "flow_end")) |>
-      dplyr::mutate(display_label = coalesce(flow_label, paste(Var1, "→", Var2)))
+      dplyr::left_join(
+        flow_labels,
+        by = c("Var1" = "flow_start", "Var2" = "flow_end")
+      ) |>
+      dplyr::mutate(
+        display_label = dplyr::coalesce(.data$flow_label,
+                                        paste(.data$Var1, "\u2192", .data$Var2))
+      )
   } else {
     df_f_labels <- df_f_labels |>
-      dplyr::mutate(display_label = paste(Var1, "→", Var2))
+      dplyr::mutate(display_label = paste(.data$Var1, "\u2192", .data$Var2))
   }
 
-  return(df_f_labels)
+  df_f_labels
 }
 
 #' Prepare node labels
@@ -155,10 +182,10 @@ prepare_node_labels <- function(df_n, node_labels = NULL) {
   if(!is.null(node_labels)) {
     df_n <- df_n |>
       dplyr::left_join(node_labels, by = c("Var" = "node")) |>
-      dplyr::mutate(display_label = dplyr::coalesce(label, Var))
+      dplyr::mutate(display_label = dplyr::coalesce(.data$label, .data$Var))
   } else {
     df_n <- df_n |>
-      dplyr::mutate(display_label = Var)
+      dplyr::mutate(display_label = .data$Var)
   }
 
   return(df_n)
@@ -242,7 +269,8 @@ add_line_breaks_smart <- function(x, width = 80, break_words = FALSE) {
 #'
 #' @export
 nodes_up <- function(dat){
-  up <- dat[,c("0", "1", "2", "3")] |>
+  up <- dat |>
+    dplyr::select(dplyr::any_of(c("0", "1", "2", "3"))) |>
     dplyr::select(dplyr::where(~!all(is.na(.x))))
 
   up_nodes <- apply(up, 2, function(x){
@@ -250,11 +278,11 @@ nodes_up <- function(dat){
       as.data.frame()
   }) |>
     dplyr::bind_rows() |>
-    dplyr::mutate(percent = round(100 * (Freq / nrow(up)))) |>
-    dplyr::mutate(label = paste0(x, "\n(", percent, "%)")) |>
-    dplyr::mutate(label = add_line_breaks_smart(label, width = 15)) |>
-    dplyr::select(x, label) |>
-    dplyr::rename(node = x)
+    dplyr::mutate(percent = round(100 * (.data$Freq / nrow(up)))) |>
+    dplyr::mutate(label = paste0(.data$x, "\n(", .data$percent, "%)")) |>
+    dplyr::mutate(label = add_line_breaks_smart(.data$label, width = 15)) |>
+    dplyr::select("x", "label") |>
+    dplyr::rename(node = "x")
 
   return(
     list(
@@ -280,7 +308,8 @@ nodes_up <- function(dat){
 #'
 #' @export
 nodes_down <- function(dat){
-  down <- dat[,c("0", "-1", "-2", "-3")] |>
+  down <- dat |>
+    dplyr::select(dplyr::any_of(c("0", "-1", "-2", "-3"))) |>
     dplyr::select(dplyr::where(~!all(is.na(.x))))
 
   down_nodes <- apply(down, 2, function(x){
@@ -288,11 +317,11 @@ nodes_down <- function(dat){
       as.data.frame()
   }) |>
     dplyr::bind_rows() |>
-    dplyr::mutate(percent = round(100 * (Freq / nrow(down)))) |>
-    dplyr::mutate(label = paste0(x, "\n(", percent, "%)")) |>
-    dplyr::mutate(label = add_line_breaks_smart(label, width = 15)) |>
-    dplyr::select(x, label) |>
-    dplyr::rename(node = x)
+    dplyr::mutate(percent = round(100 * (.data$Freq / nrow(down)))) |>
+    dplyr::mutate(label = paste0(.data$x, "\n(", .data$percent, "%)")) |>
+    dplyr::mutate(label = add_line_breaks_smart(.data$label, width = 15)) |>
+    dplyr::select("x", "label") |>
+    dplyr::rename(node = "x")
 
 
   return(

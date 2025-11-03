@@ -8,7 +8,7 @@ make_sankey(
   dat,
   node_labels = NULL,
   flow_labels = currentsee::flow_labels,
-  colors = currentsee::colours_df,
+  colours = currentsee::colours_df,
   node_width = 0.05,
   node_label_font_size = 3,
   flow_label_font_size = 2.5,
@@ -25,7 +25,7 @@ make_sankey(
 
 \item{flow_labels}{Data frame with columns 'flow_start', 'flow_end', 'flow_label' for custom flow labels (optional)}
 
-\item{colors}{Data frame with columns 'node' and 'colour' for custom node colors, or named vector (optional)}
+\item{colours}{Data frame with columns 'node' and 'colour' for custom node colours, or named vector (optional)}
 
 \item{node_width}{Numeric. Width of node rectangles (default: 0.05)}
 
@@ -45,6 +45,6 @@ make_sankey(
 ggplot2 object representing the Sankey diagram
 }
 \description{
-Generates a Sankey diagram with customizable nodes, flows, colors, and labels.
+Generates a Sankey diagram with customizable nodes, flows, colours, and labels.
 Supports dead-end flows (NA values), custom labeling, and flexible styling options.
 }

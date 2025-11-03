@@ -3,10 +3,8 @@ df <- opts$df
 
 library(shiny)
 library(bslib)
-library(shinythemes)
 library(dplyr)
 library(tidyr)
-library(networkD3)
 
 ui <-
   fluidPage(
@@ -25,7 +23,7 @@ ui <-
               class = "app-brand-subtitle")
         )
       ),
-      theme = shinytheme("readable"),
+      theme = shinythemes::shinytheme("readable"),
 
       # Page 1: Introduction -------------------------------------------------------
       tabPanel(

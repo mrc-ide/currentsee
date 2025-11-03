@@ -16,9 +16,11 @@ Imports:
     dplyr,
     shiny,
     rlang,
-    jsonlite,
     bslib,
-    shinythemes
+    RColorBrewer,
+    ggplot2,
+    ggnewscale,
+    tidyr
 Suggests:
     knitr,
     qpdf,

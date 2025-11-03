@@ -5,7 +5,7 @@
 #'
 #' @format A data frame with 24 rows and 2 variables:
 #' \describe{
-#'   \item{package}{Character string describing the intervention package (e.g. `"cm"`, `"cm, itn"`).}
+#'   \item{node}{Character string describing the intervention package (e.g. `"cm"`, `"cm, itn"`).}
 #'   \item{colour}{Hexadecimal colour code associated with the package.}
 #' }
 #'
