@@ -91,7 +91,7 @@ ui <-
                     "Removing interventions",
                     br(),
                     br(),
-                    networkD3::sankeyNetworkOutput(
+                    plotOutput(
                       "sankey_down",
                       height = "500px",
                       width = "100%"
@@ -102,7 +102,7 @@ ui <-
                     "Adding interventions",
                     br(),
                     br(),
-                    networkD3::sankeyNetworkOutput(
+                    plotOutput(
                       "sankey_up",
                       height = "500px",
                       width = "100%"
@@ -220,7 +220,7 @@ server <- function(input, output, session) {
   #    Everything NOT in this list will become a filter dropdown automatically.
   #    Adjust this list to match what make_nodes / make_links require.
   # ---------------------------------------------------------------------------
-  core_cols <- c("id", "step", "package", "next_package", "cost", "impact")
+  core_cols <- c("-4", "-3", "-2", "-1", "0", "1", "2", "3", "4")
 
   # ---------------------------------------------------------------------------
   # 1. Working dataset.
@@ -386,30 +386,12 @@ server <- function(input, output, session) {
   sankey_inputs <- reactive({
     d <- current_subset()
 
-    # If "step" is missing entirely, bail gracefully
-    if (!("step" %in% names(d))) {
-      return(list(
-        nodes_down = data.frame(),
-        links_down = data.frame(),
-        nodes_up   = data.frame(),
-        links_up   = data.frame()
-      ))
-    }
-
-    d_up   <- d[d$step >= 0, , drop = FALSE]
-    d_down <- d[d$step <= 0, , drop = FALSE]
-
-    nodes_up   <- make_nodes(d_up)
-    links_up   <- make_links(d_up,   nodes_up)
-
-    nodes_down <- make_nodes(d_down)
-    links_down <- make_links(d_down, nodes_down, down = TRUE)
+    up   <- nodes_up(d)
+    down <- nodes_down(d)
 
     list(
-      nodes_down = nodes_down,
-      links_down = links_down,
-      nodes_up   = nodes_up,
-      links_up   = links_up
+      down = down,
+      up   = up
     )
   })
 
@@ -427,7 +409,7 @@ server <- function(input, output, session) {
   #    We'll accept this if there's exactly one non-NA current in the subset
   #    and it's not "All".
   # ---------------------------------------------------------------------------
-  output$sankey_up <- networkD3::renderSankeyNetwork({
+  output$sankey_up <- renderPlot({
     d_use <- current_subset()
 
     # Check current is defined sensibly in the subset
@@ -447,16 +429,17 @@ server <- function(input, output, session) {
     f <- sankey_inputs()
     validate(
       need(
-        nrow(f$links_up) > 0 && nrow(f$nodes_up) > 0,
+        nrow(f$up$up) > 0,
         "No matching pathways for this combination of filters."
       )
     )
 
-    currentsee::make_sankey(
-      f$nodes_up,
-      f$links_up,
-      nodeWidth = 60,
-      fontSize  = 15
+    make_sankey(
+      f$up$up,
+      f$up$up_nodes,
+      node_width = 0.2,
+      flow_label_font_size = 4,
+      node_label_font_size = 5
     )
   })
 
@@ -464,7 +447,7 @@ server <- function(input, output, session) {
   # ---------------------------------------------------------------------------
   # 9. Render "Decreasing spend" Sankey (mirror logic).
   # ---------------------------------------------------------------------------
-  output$sankey_down <- networkD3::renderSankeyNetwork({
+  output$sankey_down <- renderPlot({
     d_use <- current_subset()
 
     current_vals <- unique(as.character(d_use$current))
@@ -483,16 +466,17 @@ server <- function(input, output, session) {
     f <- sankey_inputs()
     validate(
       need(
-        nrow(f$links_down) > 0 && nrow(f$nodes_down) > 0,
+        nrow(f$down$down) > 0,
         "No matching pathways for this combination of filters."
       )
     )
 
     currentsee::make_sankey(
-      f$nodes_down,
-      f$links_down,
-      nodeWidth = 60,
-      fontSize  = 15
+      f$down$down,
+      f$down$down_nodes,
+      node_width = 0.2,
+      flow_label_font_size = 4,
+      node_label_font_size = 5
     )
   })
 

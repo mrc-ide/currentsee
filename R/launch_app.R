@@ -16,12 +16,6 @@
 #'
 #' @export
 launch_step_app <- function(df) {
-  required_cols <- c("id", "step", "package", "current")
-  missing <- setdiff(required_cols, names(df))
-  if (length(missing) > 0) {
-    stop("`df` must contain columns: ", paste(missing, collapse = ", "))
-  }
-
   opts <- list(
     df = df
   )
