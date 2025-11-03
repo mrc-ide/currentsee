@@ -223,7 +223,21 @@ add_line_breaks_smart <- function(x, width = 80, break_words = FALSE) {
   }, USE.NAMES = FALSE)
 }
 
-
+#' Process data for upward scaling Sankey diagram
+#'
+#' Processes intervention scaling data for upward flows (adding interventions).
+#' Extracts columns for current state and 1-3 additional interventions, calculates
+#' percentages, creates formatted node labels, and removes columns with all NA values.
+#'
+#' @param dat Data frame containing intervention scaling data with columns named
+#'   "0", "1", "2", "3" representing current state and progressive intervention additions
+#'
+#' @return List containing two elements:
+#'   \item{up}{Data frame with processed upward scaling data, NA-only columns removed}
+#'   \item{up_nodes}{Data frame with columns 'node' and 'label' containing formatted
+#'     node labels with percentages and line breaks for display}
+#'
+#' @export
 nodes_up <- function(dat){
   up <- dat[,c("0", "1", "2", "3")]
   up_nodes <- apply(up, 2, function(x){
@@ -244,6 +258,21 @@ nodes_up <- function(dat){
   return(list(up = up, up_nodes = up_nodes))
 }
 
+#' Process data for downward scaling Sankey diagram
+#'
+#' Processes intervention scaling data for downward flows (removing interventions).
+#' Extracts columns for current state and 1-3 intervention removals, calculates
+#' percentages, creates formatted node labels, and removes columns with all NA values.
+#'
+#' @param dat Data frame containing intervention scaling data with columns named
+#'   "0", "-1", "-2", "-3" representing current state and progressive intervention removals
+#'
+#' @return List containing two elements:
+#'   \item{down}{Data frame with processed downward scaling data, NA-only columns removed}
+#'   \item{down_nodes}{Data frame with columns 'node' and 'label' containing formatted
+#'     node labels with percentages and line breaks for display}
+#'
+#' @export
 nodes_down <- function(dat){
   down <- dat[,c("0", "-1", "-2", "-3")]
 
@@ -265,6 +294,27 @@ nodes_down <- function(dat){
   return(list(down = down, down_nodes = down_nodes))
 }
 
+#' Create descriptive x-axis labels for intervention scaling
+#'
+#' Converts numeric intervention scaling values to descriptive labels for Sankey
+#' diagram x-axes. Handles current state (0), adding interventions (positive values),
+#' and removing interventions (negative values) with appropriate formatting.
+#'
+#' @param x Numeric vector representing intervention scaling steps where:
+#'   \itemize{
+#'     \item 0 = Current state
+#'     \item Positive values = Number of interventions to add
+#'     \item Negative values = Number of interventions to remove
+#'   }
+#'
+#' @return Character vector of formatted labels with line breaks:
+#'   \itemize{
+#'     \item "Current" for value 0
+#'     \item "Add X\\nInterventions" for positive values
+#'     \item "Remove X\\nInterventions" for negative values
+#'   }
+#'
+#' @export
 make_x_labs <- function(x){
   x <- as.numeric(x)
   names <- character(length(x))

@@ -10,6 +10,7 @@
 #' @param node_width Numeric. Width of node rectangles (default: 0.05)
 #' @param node_label_font_size Numeric. Font size for node labels (default: 3)
 #' @param flow_label_font_size Numeric. Font size for flow labels (default: 2.5)
+#' @param x_label_font_size Numeric. Font size for x-axis tick labels
 #' @param x_names Character vector. Labels for x-axis (column names by default)
 #' @param flow_alpha Numeric. Transparency of flow ribbons (default: 0.3)
 #' @param gradient_res Integer. Resolution of flow gradients for smoothness (default: 3000)
@@ -24,6 +25,7 @@ make_sankey <- function(
     node_width = 0.05,         # Width of the node rectangles (default: 0.05)
     node_label_font_size = 3,  # Font size for node labels (default: 3)
     flow_label_font_size = 2.5, # Font size for flow labels (default: 2.5)
+    x_label_font_size = 12,
     x_names = make_x_labs(names(dat)),
     flow_alpha = 0.3,
     gradient_res = 3000
@@ -107,6 +109,7 @@ make_sankey <- function(
       axis.title.y = element_blank(),
       axis.text.y = element_blank(),
       axis.ticks.y = element_blank(),
+      axis.text.x = element_text(size = x_label_font_size, color = "black"),
       legend.position = "none"
     )
 

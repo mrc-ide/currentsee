@@ -91,22 +91,14 @@ ui <-
                     "Removing interventions",
                     br(),
                     br(),
-                    plotOutput(
-                      "sankey_down",
-                      height = "500px",
-                      width = "100%"
-                    ),
+                    uiOutput("sankey_down_container"),
                     h4("") # spacer to avoid scrollbars
                   ),
                   bslib::nav_panel(
                     "Adding interventions",
                     br(),
                     br(),
-                    plotOutput(
-                      "sankey_up",
-                      height = "500px",
-                      width = "100%"
-                    ),
+                    uiOutput("sankey_up_container"),
                     h4("") # spacer to avoid scrollbars
                   )
                 )
@@ -268,7 +260,7 @@ server <- function(input, output, session) {
   # ---------------------------------------------------------------------------
   filter_vars <- reactive({
     d <- df_current()
-    setdiff(names(d), core_cols)
+    c("current", setdiff(names(d), c("current", core_cols)))
   })
 
 
@@ -415,6 +407,7 @@ server <- function(input, output, session) {
     # Check current is defined sensibly in the subset
     current_vals <- unique(as.character(d_use$current))
     current_vals <- current_vals[!is.na(current_vals)]
+
     validate(
       need(
         length(current_vals) == 1 && current_vals != "All",
@@ -437,9 +430,21 @@ server <- function(input, output, session) {
     make_sankey(
       f$up$up,
       f$up$up_nodes,
-      node_width = 0.2,
+      node_width = 0.25,
       flow_label_font_size = 4,
       node_label_font_size = 5
+    )
+  })
+
+  output$sankey_up_container <- renderUI({
+    f <- sankey_inputs()
+    n_cols <- ncol(f$up$up)
+    plot_width <- n_cols * 200
+
+    plotOutput(
+      "sankey_up",
+      height = "500px",
+      width = paste0(plot_width, "px")
     )
   })
 
@@ -474,9 +479,21 @@ server <- function(input, output, session) {
     currentsee::make_sankey(
       f$down$down,
       f$down$down_nodes,
-      node_width = 0.2,
+      node_width = 0.25,
       flow_label_font_size = 4,
       node_label_font_size = 5
+    )
+  })
+
+  output$sankey_down_container <- renderUI({
+    f <- sankey_inputs()
+    n_cols <- ncol(f$down$down)
+    plot_width <- n_cols * 200
+
+    plotOutput(
+      "sankey_down",
+      height = "500px",
+      width = paste0(plot_width, "px")
     )
   })
 
