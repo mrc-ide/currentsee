@@ -28,6 +28,11 @@ contact_card <- function(
     .contact-card {
       margin: 1rem;
     }
+    .contact-card img {
+      width: 50%;
+      height: auto;
+      display: block
+    }
   "))
 
   img_el <- if (!is.null(photo)) {
