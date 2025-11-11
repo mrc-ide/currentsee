@@ -599,7 +599,7 @@ server <- function(input, output, session) {
     make_sankey(
       f$up$up,
       f$up$up_nodes,
-      node_width = 0.25,
+      node_width = 0.3,
       flow_label_font_size = 4,
       node_label_font_size = 5
     )
@@ -608,7 +608,7 @@ server <- function(input, output, session) {
   output$sankey_up_container <- renderUI({
     f <- sankey_inputs()
     n_cols <- ncol(f$up$up)
-    plot_width <- n_cols * 200
+    plot_width <- n_cols * 220
 
     plotOutput(
       "sankey_up",

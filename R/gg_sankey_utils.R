@@ -280,7 +280,7 @@ nodes_up <- function(dat){
     dplyr::bind_rows() |>
     dplyr::mutate(percent = round(100 * (.data$Freq / nrow(up)))) |>
     dplyr::mutate(label = paste0(.data$x, "\n(", .data$percent, "%)")) |>
-    dplyr::mutate(label = add_line_breaks_smart(.data$label, width = 15)) |>
+    dplyr::mutate(label = add_line_breaks_smart(.data$label, width = 12)) |>
     dplyr::select("x", "label") |>
     dplyr::rename(node = "x")
 
@@ -319,7 +319,7 @@ nodes_down <- function(dat){
     dplyr::bind_rows() |>
     dplyr::mutate(percent = round(100 * (.data$Freq / nrow(down)))) |>
     dplyr::mutate(label = paste0(.data$x, "\n(", .data$percent, "%)")) |>
-    dplyr::mutate(label = add_line_breaks_smart(.data$label, width = 15)) |>
+    dplyr::mutate(label = add_line_breaks_smart(.data$label, width = 12)) |>
     dplyr::select("x", "label") |>
     dplyr::rename(node = "x")
 
