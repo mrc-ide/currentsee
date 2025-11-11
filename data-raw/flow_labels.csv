@@ -38,3 +38,20 @@ flow_start,flow_end,flow_label
 "cm, itn, chem","cm, itn",Remove chem
 "cm, chem",cm,Remove chem
 "cm, irs",cm,Remove irs
+"cm, itn, chem, vaccine","cm, itn, vaccine",Remove chem
+"cm, itn, chem, vaccine","cm, itn, chem",Remove vaccine
+"cm, itn, chem, vaccine","cm, chem, vaccine",Remove itn
+"cm, itn, vaccine","cm, vaccine",Remove itn
+"cm, chem, vaccine","cm, chem",Remove vaccine
+"cm, vaccine",cm,Remove vaccine
+"cm, irs, vaccine","cm, vaccine",Remove irs
+"cm, irs, vaccine","cm, irs",Remove vaccine
+"cm, itn+, chem","cm, itn+",Remove chem
+"cm, itn+, irs, chem","cm, itn+, irs",Remove chem
+"cm, itn+, irs, chem","cm, itn+, chem",Remove irs
+"cm, itn+, irs","cm, itn+",Remove irs
+"cm, itn+, chem","cm, itn+",Remove chem
+"cm, irs","cm, irs, vaccine",Add vaccine
+"cm, irs","cm, irs, chem",Add chem
+"cm, irs, vaccine","cm, irs, chem, vaccine",Add chem
+"cm, irs, chem","cm, irs, chem, vaccine",Add vaccine
