@@ -6,6 +6,9 @@
 \usage{
 tab_introduction()
 }
+\value{
+A tabPanel for the Introduction tab
+}
 \description{
 App introduction tab
 }

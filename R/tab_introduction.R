@@ -31,7 +31,7 @@ tab_introduction <- function() {
       shiny::p(
         "M3CPI is a WHO-led project generating modelled evidence to inform ",
         "global recommendations on the optimal mix of malaria interventions ",
-        "in malaria-endemic settings. The results contribute to updating WHO’s ",
+        "in malaria-endemic settings. The results contribute to updating WHO's ",
         "\"Guiding principles for prioritizing malaria interventions in ",
         "resource-constrained country contexts to achieve maximum impact\"."
       ),
