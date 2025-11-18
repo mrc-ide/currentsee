@@ -1,3 +1,6 @@
+#' App introduction tab
+#'
+#' @return NULL
 tab_introduction <- function(){
   shiny::tabPanel(
     "Introduction",

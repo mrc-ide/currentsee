@@ -1,3 +1,6 @@
+#' App methods tab
+#'
+#' @return NULL
 tab_methods <- function(){
   shiny::tabPanel(
     "Methods",
