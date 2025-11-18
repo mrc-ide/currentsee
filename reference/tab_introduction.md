@@ -7,3 +7,7 @@ App introduction tab
 ``` r
 tab_introduction()
 ```
+
+## Value
+
+A tabPanel for the Introduction tab

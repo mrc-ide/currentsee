@@ -3,7 +3,7 @@ pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   currentsee: currentsee.html
-last_built: 2025-11-18T14:55Z
+last_built: 2025-11-18T15:09Z
 urls:
   reference: https://mrc-ide.github.io/currentsee/reference
   article: https://mrc-ide.github.io/currentsee/articles
