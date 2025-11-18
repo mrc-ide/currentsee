@@ -55,7 +55,16 @@ simulate_single <- function(int, current, weights, id = NULL) {
   out$id <- id
   out <- out[order(out$step), , drop = FALSE]
 
-  out
+  out <- out |>
+    dplyr::select("id", "step", "package") |>
+    tidyr::pivot_wider(
+      id_cols = c("id"),
+      names_from = "step",
+      values_from = "package"
+    ) |>
+    dplyr::mutate(current = .data$`0`)
+
+  return(out)
 }
 
 #' Simulate package transitions for Sankey examples
@@ -104,11 +113,11 @@ simulate <- function(
   df <- lapply(seq_len(n), function(x, ...) {
     simulate_single(id = x, ...)
   }, int = int, current = current, weights = weights) |>
-    dplyr::bind_rows() |>
-    dplyr::mutate(
-      current = .data$package[.data$step == 0],
-      .by = "id"
-    )
+    dplyr::bind_rows()# |>
+    #dplyr::mutate(
+    #  current = .data$package[.data$step == 0],
+    #  .by = "id"
+    #)
 
   dplyr::as_tibble(df)
 }

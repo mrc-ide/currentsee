@@ -3,10 +3,8 @@ df <- opts$df
 
 library(shiny)
 library(bslib)
-library(shinythemes)
 library(dplyr)
 library(tidyr)
-library(networkD3)
 
 ui <-
   fluidPage(
@@ -25,37 +23,25 @@ ui <-
               class = "app-brand-subtitle")
         )
       ),
-      theme = shinytheme("readable"),
-
-
+      theme = shinythemes::shinytheme("readable"),
 
       # Page 1: Introduction -------------------------------------------------------
-      tabPanel(
-        "Introduction",
-        fluidPage(
-          bslib::card(
-            bslib::card_header("Welcome"),
-            p("This is a placeholder introduction. Briefly explain the purpose of the app,
-          data sources, and what users can do here."),
-            p("Add any context, scope, and caveats you want users to know before exploring.")
-          )
-        )
-      ),
+      tab_introduction(),
       # ----------------------------------------------------------------------------
 
-      # Page 2: How to interpret output --------------------------------------------
+      # Page 2: Methods -------------------------------------------------------
+      tab_methods(),
+      # ----------------------------------------------------------------------------
+
+      # Page 3: How to interpret output --------------------------------------------
       tabPanel(
         "How to interpret output",
         fluidPage(
-          bslib::card(
-            bslib::card_header("Reading the Sankey outputs"),
-            p("Placeholder guidance on interpreting the visualisations and metrics."),
-            tags$ul(
-              tags$li("What each node and link represents."),
-              tags$li("Direction of flow and sign conventions."),
-              tags$li("Any thresholds, filters, or assumptions to keep in mind.")
-            ),
-            p("You can expand this section later with examples and screenshots.")
+          tags$iframe(
+            src = "sankey_101.pdf",
+            width = "100%",
+            height = "600px",
+            style = "border: none;"
           )
         )
       ),
@@ -91,22 +77,14 @@ ui <-
                     "Removing interventions",
                     br(),
                     br(),
-                    networkD3::sankeyNetworkOutput(
-                      "sankey_down",
-                      height = "500px",
-                      width = "100%"
-                    ),
+                    uiOutput("sankey_down_container"),
                     h4("") # spacer to avoid scrollbars
                   ),
                   bslib::nav_panel(
                     "Adding interventions",
                     br(),
                     br(),
-                    networkD3::sankeyNetworkOutput(
-                      "sankey_up",
-                      height = "500px",
-                      width = "100%"
-                    ),
+                    uiOutput("sankey_up_container"),
                     h4("") # spacer to avoid scrollbars
                   )
                 )
@@ -118,96 +96,11 @@ ui <-
       # ----------------------------------------------------------------------------
 
       # Page 4: FAQs ---------------------------------------------------------------
-      tabPanel(
-        "FAQs",
-        fluidPage(
-          bslib::card(
-            # Each question and answer pair --------------------------
-            tags$div(
-              tags$span(
-                shiny::icon("lightbulb"),
-                tags$b(" What does the Sankey diagram show?")
-              ),
-              br(),
-              p("Each node represents an intervention or combination of interventions.
-           The links show how resources or impact shift between scenarios.
-           Thicker links indicate larger changes."),
-              br()
-            ),
-
-            tags$div(
-              tags$span(
-                shiny::icon("lightbulb"),
-                tags$b(" Why can’t I see a Sankey when I open the app?")
-              ),
-              p("You need to select a baseline 'current' value in the filters on the
-           left-hand side. Once you do, the Sankey will appear."),
-              br()
-            ),
-
-            tags$div(
-              tags$span(
-                shiny::icon("lightbulb"),
-                tags$b("  What does ‘No matching pathways’ mean?")
-              ),
-              p("This appears when your chosen filters return no data—try broadening
-           your selections or resetting one of the filters to 'All'."),
-              br()
-            )
-            # ---------------------------------------------------------
-          )
-        )
-      ),
+      tab_faqs(),
+      # ----------------------------------------------------------------------------
 
       # Page 5: Modelling team -----------------------------------------------------
-      tabPanel(
-        "Modelling team",
-        fluidPage(
-          h3("Meet the team"),
-          br(),
-          br(),
-          bslib::layout_column_wrap(
-            width = 300, heights_equal = "all",
-            contact_card(
-              name = "Emilie Pothin",
-              role = "Project lead",
-              org  = "SwissTPH",
-              email = "emilie.pothin@swisstph.ch"
-            ),
-            contact_card(
-              name = "Peter Winskill",
-              role = "Project lead",
-              org  = "Imperial College London",
-              email = "p.winskill@imperial.ac.uk"
-            ),
-            contact_card(
-              name = "Monica Golumbeanu",
-              role = "Senior Modeller",
-              org  = "SwissTPH"
-            ),
-            contact_card(
-              name = "Tom Brewer",
-              role = "Senior Modeller",
-              org  = "Imperial College London"
-            ),
-            contact_card(
-              name = "Leandro Gandos Brito",
-              role = "Methodology and implementation",
-              org  = "SwissTPH"
-            ),
-            contact_card(
-              name = "Dariya Nikitin",
-              role = "Methodology and implementation",
-              org  = "Imperial College London"
-            ),
-            contact_card(
-              name = "Daniela Olivera Mesa",
-              role = "App development",
-              org  = "Imperial College London"
-            )
-          )
-        )
-      )
+      tab_team()
       # ----------------------------------------------------------------------------
     )
   )
@@ -220,7 +113,7 @@ server <- function(input, output, session) {
   #    Everything NOT in this list will become a filter dropdown automatically.
   #    Adjust this list to match what make_nodes / make_links require.
   # ---------------------------------------------------------------------------
-  core_cols <- c("id", "step", "package", "next_package", "cost", "impact")
+  core_cols <- c("-4", "-3", "-2", "-1", "0", "1", "2", "3", "4")
 
   # ---------------------------------------------------------------------------
   # 1. Working dataset.
@@ -268,7 +161,7 @@ server <- function(input, output, session) {
   # ---------------------------------------------------------------------------
   filter_vars <- reactive({
     d <- df_current()
-    setdiff(names(d), core_cols)
+    c("current", setdiff(names(d), c("current", core_cols)))
   })
 
 
@@ -384,33 +277,7 @@ server <- function(input, output, session) {
   #    Returns a list(nodes_up, links_up, nodes_down, links_down)
   # ---------------------------------------------------------------------------
   sankey_inputs <- reactive({
-    d <- current_subset()
-
-    # If "step" is missing entirely, bail gracefully
-    if (!("step" %in% names(d))) {
-      return(list(
-        nodes_down = data.frame(),
-        links_down = data.frame(),
-        nodes_up   = data.frame(),
-        links_up   = data.frame()
-      ))
-    }
-
-    d_up   <- d[d$step >= 0, , drop = FALSE]
-    d_down <- d[d$step <= 0, , drop = FALSE]
-
-    nodes_up   <- make_nodes(d_up)
-    links_up   <- make_links(d_up,   nodes_up)
-
-    nodes_down <- make_nodes(d_down)
-    links_down <- make_links(d_down, nodes_down, down = TRUE)
-
-    list(
-      nodes_down = nodes_down,
-      links_down = links_down,
-      nodes_up   = nodes_up,
-      links_up   = links_up
-    )
+    current_subset()
   })
 
 
@@ -427,12 +294,13 @@ server <- function(input, output, session) {
   #    We'll accept this if there's exactly one non-NA current in the subset
   #    and it's not "All".
   # ---------------------------------------------------------------------------
-  output$sankey_up <- networkD3::renderSankeyNetwork({
+  output$sankey_up <- renderPlot({
     d_use <- current_subset()
 
     # Check current is defined sensibly in the subset
     current_vals <- unique(as.character(d_use$current))
     current_vals <- current_vals[!is.na(current_vals)]
+
     validate(
       need(
         length(current_vals) == 1 && current_vals != "All",
@@ -447,16 +315,29 @@ server <- function(input, output, session) {
     f <- sankey_inputs()
     validate(
       need(
-        nrow(f$links_up) > 0 && nrow(f$nodes_up) > 0,
+        nrow(f) > 0,
         "No matching pathways for this combination of filters."
       )
     )
 
-    currentsee::make_sankey(
-      f$nodes_up,
-      f$links_up,
-      nodeWidth = 60,
-      fontSize  = 15
+    make_sankey(
+      f,
+      "up",
+      node_width = 0.3,
+      flow_label_font_size = 4,
+      node_label_font_size = 5
+    )
+  })
+
+  output$sankey_up_container <- renderUI({
+    f <- sankey_inputs()
+    n_cols <- sum(names(f[, !sapply(f, function(x) all(is.na(x)))]) %in% paste(0:20))
+    plot_width <- n_cols * 220
+
+    plotOutput(
+      "sankey_up",
+      height = "500px",
+      width = paste0(plot_width, "px")
     )
   })
 
@@ -464,7 +345,7 @@ server <- function(input, output, session) {
   # ---------------------------------------------------------------------------
   # 9. Render "Decreasing spend" Sankey (mirror logic).
   # ---------------------------------------------------------------------------
-  output$sankey_down <- networkD3::renderSankeyNetwork({
+  output$sankey_down <- renderPlot({
     d_use <- current_subset()
 
     current_vals <- unique(as.character(d_use$current))
@@ -483,16 +364,29 @@ server <- function(input, output, session) {
     f <- sankey_inputs()
     validate(
       need(
-        nrow(f$links_down) > 0 && nrow(f$nodes_down) > 0,
+        nrow(f) > 0,
         "No matching pathways for this combination of filters."
       )
     )
 
     currentsee::make_sankey(
-      f$nodes_down,
-      f$links_down,
-      nodeWidth = 60,
-      fontSize  = 15
+      f,
+      "down",
+      node_width = 0.25,
+      flow_label_font_size = 4,
+      node_label_font_size = 5
+    )
+  })
+
+  output$sankey_down_container <- renderUI({
+    f <- sankey_inputs()
+    n_cols <- sum(names(f[, !sapply(f, function(x) all(is.na(x)))]) %in% paste(0:-20))
+    plot_width <- n_cols * 200
+
+    plotOutput(
+      "sankey_down",
+      height = "500px",
+      width = paste0(plot_width, "px")
     )
   })
 

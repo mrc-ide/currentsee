@@ -58,35 +58,14 @@ include the current package as a grouping variable.
 The resulting data.frame records every step in each trajectory, including the
 package string and which intervention changed.
 
-## 2. Build Sankey inputs
+## 2. Create a static Sankey diagram
 
-Next we convert the raw simulation into the node and link structures required
-by `networkD3::sankeyNetwork()`.
-
-```{r build}
-nodes <- make_nodes(df)
-links <- make_links(df, nodes)
-
-glimpse(nodes)
-glimpse(links)
-```
-
-Nodes represent unique package combinations, while links count how often we
-move from one combination to the next. Tooltips are automatically generated to
-summarise which interventions were added or removed.
-
-## 3. Create a static Sankey diagram
-
-With the inputs prepared we can render an interactive Sankey diagram directly
+Using our simulated inputs we can render an interactive Sankey diagram directly
 in the RStudio viewer or an HTML document.
 
 ```{r sankey, out.width='100%'}
 make_sankey(
-  nodes, links, 
-  nodeWidth = 40,
-  fontSize = 12,
-  height = "500px",
-  width = "1000px"
+  df, "up"
 )
 
 ```
@@ -101,7 +80,7 @@ This opens in your default browser and allows you to subset the trajectories by
 any grouping columns you provide.
 
 ```{r shiny, eval = FALSE}
-launch_step_app(df, group_cols = "season")
+launch_step_app(df[,c("-1", "0", "1", "2", "3", "season", "current")])
 ```
 
 The app keeps the same Sankey rendering but adds dropdown selectors for the

@@ -3,11 +3,8 @@ test_that("simulate produces tidy transition data", {
   df <- simulate(3)
 
   expect_s3_class(df, "tbl_df")
-  expect_setequal(names(df), c("step", "package", "changed", "id", "current"))
-  expect_equal(length(unique(df$id)), 3)
-
-  steps_by_id <- split(df$step, df$id)
-  expect_true(all(vapply(steps_by_id, function(x) all(diff(x) >= 0), logical(1))))
+  expect_setequal(names(df), c("id", "-1", "0", "1", "2", "3", "current"))
+  expect_equal(nrow(df), 3)
 
   expect_error(simulate(0), "positive integer")
   expect_error(simulate(1, current = c("cm", "zzz")), "present")

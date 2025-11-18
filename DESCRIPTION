@@ -14,18 +14,17 @@ URL: https://github.com/mrc-ide/currentsee, https://mrc-ide.github.io/currentsee
 BugReports: https://github.com/mrc-ide/currentsee/issues
 Imports:
     dplyr,
-    htmlwidgets,
-    networkD3,
-    purrr,
     shiny,
     rlang,
-    jsonlite,
-    htmltools,
     bslib,
-    tibble
+    RColorBrewer,
+    ggplot2,
+    ggnewscale,
+    tidyr
 Suggests:
     knitr,
     qpdf,
+    rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr

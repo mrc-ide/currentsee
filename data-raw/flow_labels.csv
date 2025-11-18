@@ -1,0 +1,62 @@
+flow_start,flow_end,flow_label
+"cm, itn, irs, chem","cm, itn+, irs, chem",Scale up itns
+"cm, itn, irs, chem","cm, itn, irs, chem, vaccine",Add vaccine
+"cm, itn, chem","cm, itn+, chem",Scale up itns
+"cm, itn, chem","cm, itn, chem, vaccine",Add vaccine
+"cm, itn","cm, itn+",Scale up itns
+"cm, itn","cm, itn, vaccine",Add vaccine
+"cm, itn","cm, itn, chem",Add chem
+"cm, itn, irs","cm, itn, irs, chem",Add chem
+"cm, itn, irs","cm, itn, irs, vaccine",Add vaccine
+"cm, itn, irs","cm, itn+, irs",Scale up itns
+"cm, itn, vaccine","cm, itn+, vaccine",Scale up itns
+"cm, itn, irs, vaccine","cm, itn+, irs, vaccine",Scale up itns
+"cm, itn, irs, vaccine","cm, itn, irs, chem, vaccine",Add chem
+"cm, itn+, irs, chem","cm, itn+, irs, chem, vaccine",Add vaccine
+"cm, itn, irs, chem, vaccine","cm, itn+, irs, chem, vaccine",Scale up itns
+"cm, itn+, chem","cm, itn+, chem, vaccine",Add vaccine
+"cm, itn, chem, vaccine","cm, itn+, chem, vaccine",Scale up itns
+"cm, itn+","cm, itn+, vaccine",Add vaccine
+"cm, itn, vaccine","cm, itn, chem, vaccine",Add chem
+"cm, itn+","cm, itn+, chem",Add chem
+"cm, itn+, irs","cm, itn+, irs, chem",Add chem
+"cm, itn+, vaccine","cm, itn+, chem, vaccine",Add chem
+"cm, itn+, irs, vaccine","cm, itn+, irs, chem, vaccine",Add chem
+"cm, itn+, irs","cm, itn+, irs, vaccine",Add vaccine
+"cm, itn, irs, chem","cm, itn, irs",Remove chem
+"cm, itn, irs, chem","cm, irs, chem",Remove itn
+"cm, itn, irs, chem","cm, itn, chem",Remove irs
+"cm, itn, chem","cm, chem",Remove itn
+"cm, itn",cm,Remove itn
+"cm, itn, irs","cm, irs",Remove itn
+"cm, itn, irs","cm, itn",Remove irs
+"cm, itn, vaccine","cm, itn",Remove vaccine
+"cm, itn, irs, vaccine","cm, itn, irs",Remove vaccine
+"cm, itn, irs, vaccine","cm, itn, vaccine",Remove irs
+"cm, irs, chem","cm, irs",Remove chem
+"cm, irs, chem","cm, chem",Remove irs
+"cm, itn, chem","cm, itn",Remove chem
+"cm, chem",cm,Remove chem
+"cm, irs",cm,Remove irs
+"cm, itn, chem, vaccine","cm, itn, vaccine",Remove chem
+"cm, itn, chem, vaccine","cm, itn, chem",Remove vaccine
+"cm, itn, chem, vaccine","cm, chem, vaccine",Remove itn
+"cm, itn, vaccine","cm, vaccine",Remove itn
+"cm, chem, vaccine","cm, chem",Remove vaccine
+"cm, vaccine",cm,Remove vaccine
+"cm, irs, vaccine","cm, vaccine",Remove irs
+"cm, irs, vaccine","cm, irs",Remove vaccine
+"cm, itn+, chem","cm, itn+",Remove chem
+"cm, itn+, irs, chem","cm, itn+, irs",Remove chem
+"cm, itn+, irs, chem","cm, itn+, chem",Remove irs
+"cm, itn+, irs","cm, itn+",Remove irs
+"cm, itn+, chem","cm, itn+",Remove chem
+"cm, irs","cm, irs, vaccine",Add vaccine
+"cm, irs","cm, irs, chem",Add chem
+"cm, irs, vaccine","cm, irs, chem, vaccine",Add chem
+"cm, irs, chem","cm, irs, chem, vaccine",Add vaccine
+"cm, itn, vaccine","cm, vaccine",Remove itn
+"cm, vaccine",cm,Remove vaccine
+"cm, itn, vaccine","cm, itn, irs, vaccine",Add irs
+"cm, itn, chem","cm, itn, irs, chem",Add irs
+"cm, itn, chem, vaccine","cm, itn, irs, chem, vaccine",Add irs

@@ -24,9 +24,14 @@ contact_card <- function(
     photo = NULL
 ) {
   # Inject custom CSS once for all cards
-  style_tag <- shiny::tags$style(HTML("
+  style_tag <- shiny::tags$style(shiny::HTML("
     .contact-card {
       margin: 1rem;
+    }
+    .contact-card img {
+      width: 50%;
+      height: auto;
+      display: block
     }
   "))
 
