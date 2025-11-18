@@ -1,0 +1,44 @@
+# Package index
+
+## All functions
+
+- [`add_line_breaks_smart()`](https://mrc-ide.github.io/currentsee/reference/add_line_breaks_smart.md)
+  : Add smart line breaks to text strings
+- [`calculate_flow_transitions()`](https://mrc-ide.github.io/currentsee/reference/calculate_flow_transitions.md)
+  : Calculate flow transitions between columns
+- [`calculate_node_positions()`](https://mrc-ide.github.io/currentsee/reference/calculate_node_positions.md)
+  : Calculate node positions and dimensions
+- [`colours_df`](https://mrc-ide.github.io/currentsee/reference/colours_df.md)
+  : Package colour palette
+- [`contact_card()`](https://mrc-ide.github.io/currentsee/reference/contact_card.md)
+  : Create a contact card for RShiny applications
+- [`create_flow_curves()`](https://mrc-ide.github.io/currentsee/reference/create_flow_curves.md)
+  : Create detailed flow visualization data with smooth curves
+- [`flow_labels`](https://mrc-ide.github.io/currentsee/reference/flow_labels.md)
+  : Package flow labels
+- [`launch_step_app()`](https://mrc-ide.github.io/currentsee/reference/launch_step_app.md)
+  : Launch the interactive step-package Sankey application
+- [`make_sankey()`](https://mrc-ide.github.io/currentsee/reference/make_sankey.md)
+  : Create Sankey diagram
+- [`make_x_labs()`](https://mrc-ide.github.io/currentsee/reference/make_x_labs.md)
+  : Create descriptive x-axis labels for intervention scaling
+- [`nodes_down()`](https://mrc-ide.github.io/currentsee/reference/nodes_down.md)
+  : Process data for downward scaling Sankey diagram
+- [`nodes_up()`](https://mrc-ide.github.io/currentsee/reference/nodes_up.md)
+  : Process data for upward scaling Sankey diagram
+- [`prepare_flow_labels()`](https://mrc-ide.github.io/currentsee/reference/prepare_flow_labels.md)
+  : Prepare flow label positions
+- [`prepare_node_labels()`](https://mrc-ide.github.io/currentsee/reference/prepare_node_labels.md)
+  : Prepare node labels
+- [`sankey_sigmoid()`](https://mrc-ide.github.io/currentsee/reference/sankey_sigmoid.md)
+  : Sigmoid interpolation function for smooth flow curves
+- [`simulate()`](https://mrc-ide.github.io/currentsee/reference/simulate.md)
+  : Simulate package transitions for Sankey examples
+- [`tab_faqs()`](https://mrc-ide.github.io/currentsee/reference/tab_faqs.md)
+  : App FAQs tab
+- [`tab_introduction()`](https://mrc-ide.github.io/currentsee/reference/tab_introduction.md)
+  : App introduction tab
+- [`tab_methods()`](https://mrc-ide.github.io/currentsee/reference/tab_methods.md)
+  : App methods tab
+- [`tab_team()`](https://mrc-ide.github.io/currentsee/reference/tab_team.md)
+  : App team tab
