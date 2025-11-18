@@ -22,20 +22,17 @@ tab_methods <- function(){
       ),
 
       shiny::tags$p(
-        "Both models were calibrated and customised for individual admin 1 regions, incorporating context-specific factors ",
-        "that influence historical infection patterns, intervention efficacy, and observed malaria prevalence."
+        "Both models were calibrated and customised such that they are representative of,
+        sub-national variation across sub-Saharan Afrca, incorporating context-specific factors ",
+        "that influence historical infection patterns, intervention impact, and observed malaria prevalence."
       ),
 
-      shiny::tags$div(
-        style = "background-color:#f9f9f9; border-left:4px solid #0072B2; padding:10px; margin:20px 0; border-radius:6px;",
-        shiny::tags$img(src = "modelling approach.png",
-                        width = "100%",
-                        style = "max-width:600px; border-radius:8px; margin:10px 0;"),
-        shiny::tags$br(),
-        shiny::tags$b("Figure 1. Schematic representation of the modelling approach at the admin 1 level: "),
-        "Models are calibrated using global estimates from the Malaria Atlas Project to accurately represent each admin 1 region ",
-        "and reproduce historical malaria burden trends. Calibrated models are then used to conduct scenario analyses ",
-        "and assess cost-effectiveness at the admin 1 level."
+      shiny::tags$img(src = "modelling_approach.png",
+                      width = "100%",
+                      style = "max-width:600px; border-radius:8px; margin:10px 0;"),
+      shiny::tags$br(),
+      shiny::tags$b("Figure 1. Schematic representation of the modelling approach: taking calibrated, context-specific
+                      settings and modelling the impact and cost of future intervetion scenarios"
       ),
 
       shiny::tags$br(),
@@ -52,7 +49,7 @@ tab_methods <- function(){
       ),
 
       shiny::tags$ul(
-        shiny::tags$li("Insecticide-treated bed nets (ITNs)"),
+        shiny::tags$li("Insecticide-treated bed nets (ITNs), including introduction and scale-up"),
         shiny::tags$li("Chemoprevention: Seasonal (SMC) or perennial (PMC)"),
         shiny::tags$li("Indoor residual spraying (IRS)"),
         shiny::tags$li("Vaccine"),
@@ -85,32 +82,6 @@ tab_methods <- function(){
         "Costs for each intervention were derived from WHO estimates for intervention and case-management costs. ",
         "The most cost-effective intervention package at each budget level was identified using a frontier approach, ",
         "providing guidance on how to cost-effectively scale interventions up or down from current coverage levels."
-      ),
-
-      shiny::tags$br(),
-
-      # --- SECTION IV ---
-      shiny::tags$h3("IV. Setting Archetypes and Model Harmonisation"),
-
-      shiny::tags$p(
-        "Results from both models were harmonised and grouped into representative archetypes. ",
-        "Each archetype captures common patterns in how optimal intervention strategies change with budget levels ",
-        "across similar epidemiological settings."
-      ),
-
-      shiny::tags$p(
-        "Simulations were run across a range of realistic scenarios, and settings showing similar decision-making trends ",
-        "were aggregated. This allows general insights to be drawn, for example, identifying which intervention combinations ",
-        "are consistently prioritised in settings with comparable transmission intensity, seasonality, and historical coverage."
-      ),
-
-      shiny::tags$div(
-        style = "background-color:#fff3cd; border-left:4px solid #ffcc00; padding:12px; margin:25px 0; border-radius:6px;",
-        shiny::tags$b("\u26a0 Limitations"),
-        shiny::tags$ul(
-          shiny::tags$li("Aggregation of results smooths over local heterogeneities."),
-          shiny::tags$li("Outputs are indicative and meant to inform, not prescribe, interventions.")
-        )
       )
     )
   )
