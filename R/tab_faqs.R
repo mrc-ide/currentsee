@@ -1,6 +1,7 @@
 #' App FAQs tab
 #'
 #' @return NULL
+#' @export
 tab_faqs <- function(){
   shiny::tabPanel(
     "FAQs",
@@ -22,9 +23,9 @@ tab_faqs <- function(){
         shiny::tags$div(
           shiny::tags$span(
             shiny::icon("lightbulb"),
-            shiny::tags$b(" Why can’t I see a Sankey when I open the app?")
+            shiny::tags$b(" Why can't I see a Sankey when I open the app?")
           ),
-          shiny::p("You need to select a baseline 'current' value in the filters on the
+          shiny::p("You need to select a baseline current value in the filters on the
            left-hand side. Once you do, the Sankey will appear."),
           shiny::br()
         ),
@@ -32,9 +33,9 @@ tab_faqs <- function(){
         shiny::tags$div(
           shiny::tags$span(
             shiny::icon("lightbulb"),
-            shiny::tags$b("  What does ‘No matching pathways’ mean?")
+            shiny::tags$b("  What does No matching pathways mean?")
           ),
-          shiny::p("This appears when your chosen filters return no data—try broadening
+          shiny::p("This appears when your chosen filters return no data: try broadening
            your selections or resetting one of the filters to 'All'."),
           shiny::br()
         )

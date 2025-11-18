@@ -57,3 +57,6 @@ flow_start,flow_end,flow_label
 "cm, irs, chem","cm, irs, chem, vaccine",Add vaccine
 "cm, itn, vaccine","cm, vaccine",Remove itn
 "cm, vaccine",cm,Remove vaccine
+"cm, itn, vaccine","cm, itn, irs, vaccine",Add irs
+"cm, itn, chem","cm, itn, irs, chem",Add irs
+"cm, itn, chem, vaccine","cm, itn, irs, chem, vaccine",Add irs

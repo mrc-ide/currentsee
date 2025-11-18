@@ -277,15 +277,7 @@ server <- function(input, output, session) {
   #    Returns a list(nodes_up, links_up, nodes_down, links_down)
   # ---------------------------------------------------------------------------
   sankey_inputs <- reactive({
-    d <- current_subset()
-
-    up   <- nodes_up(d)
-    down <- nodes_down(d)
-
-    list(
-      down = down,
-      up   = up
-    )
+    current_subset()
   })
 
 
@@ -323,14 +315,14 @@ server <- function(input, output, session) {
     f <- sankey_inputs()
     validate(
       need(
-        nrow(f$up$up) > 0,
+        nrow(f) > 0,
         "No matching pathways for this combination of filters."
       )
     )
 
     make_sankey(
-      f$up$up,
-      f$up$up_nodes,
+      f,
+      "up",
       node_width = 0.3,
       flow_label_font_size = 4,
       node_label_font_size = 5
@@ -339,7 +331,7 @@ server <- function(input, output, session) {
 
   output$sankey_up_container <- renderUI({
     f <- sankey_inputs()
-    n_cols <- ncol(f$up$up)
+    n_cols <- sum(names(f[, !sapply(f, function(x) all(is.na(x)))]) %in% paste(0:20))
     plot_width <- n_cols * 220
 
     plotOutput(
@@ -372,14 +364,14 @@ server <- function(input, output, session) {
     f <- sankey_inputs()
     validate(
       need(
-        nrow(f$down$down) > 0,
+        nrow(f) > 0,
         "No matching pathways for this combination of filters."
       )
     )
 
     currentsee::make_sankey(
-      f$down$down,
-      f$down$down_nodes,
+      f,
+      "down",
       node_width = 0.25,
       flow_label_font_size = 4,
       node_label_font_size = 5
@@ -388,7 +380,7 @@ server <- function(input, output, session) {
 
   output$sankey_down_container <- renderUI({
     f <- sankey_inputs()
-    n_cols <- ncol(f$down$down)
+    n_cols <- sum(names(f[, !sapply(f, function(x) all(is.na(x)))]) %in% paste(0:-20))
     plot_width <- n_cols * 200
 
     plotOutput(

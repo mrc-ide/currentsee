@@ -1,6 +1,7 @@
 #' App introduction tab
 #'
 #' @return NULL
+#' @export
 tab_introduction <- function(){
   shiny::tabPanel(
     "Introduction",
@@ -10,7 +11,7 @@ tab_introduction <- function(){
       shiny::p("This application provides guidance on malaria intervention strategies across representative epidemiological
                 settings in sub-Saharan Africa. The recommended intervention packages correspond to the most cost-effective
                 configurations for scaling interventions up or down in response to changing budgets. Optimal strategies explicitly
-                account for uncertainty arising from the simulation process, model parameters, and cost assumptions.."),
+                account for uncertainty arising from the simulation process, model parameters, and cost assumptions."),
 
       shiny::h3("Key aspects to keep in mind:"),
 
@@ -45,7 +46,7 @@ tab_introduction <- function(){
       # --- Warning box (outside of the list, no bullet) ---
       shiny::tags$div(
         style = "background-color:#fff3cd; border-left:4px solid #ffcc00; padding:12px; margin:20px 0; border-radius:6px;",
-        shiny::tags$b("⚠️ Important: "),
+        shiny::tags$b("\u26a0 Important: "),
         "This tool provides general guidance. Outputs should not be interpreted as country-specific recommendations. ",
         "For detailed local decision-making, consult context-specific modelling studies."
       ),

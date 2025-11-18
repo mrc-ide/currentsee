@@ -5,23 +5,23 @@
 \title{Create Sankey diagram}
 \usage{
 make_sankey(
-  dat,
-  node_labels = NULL,
+  x,
+  direction,
   flow_labels = currentsee::flow_labels,
   colours = currentsee::colours_df,
   node_width = 0.05,
   node_label_font_size = 3,
   flow_label_font_size = 2.5,
   x_label_font_size = 12,
-  x_names = make_x_labs(names(dat)),
+  x_names = NULL,
   flow_alpha = 0.3,
   gradient_res = 3000
 )
 }
 \arguments{
-\item{dat}{Data frame where each column represents a step and each row represents a flow path}
+\item{x}{Data frame where each column represents a step and each row represents a flow path}
 
-\item{node_labels}{Data frame with columns 'node' and 'label' for custom node labels (optional)}
+\item{direction}{String "up" or "down" to determine prioritisation or deprioritisation flow}
 
 \item{flow_labels}{Data frame with columns 'flow_start', 'flow_end', 'flow_label' for custom flow labels (optional)}
 

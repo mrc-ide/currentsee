@@ -1,6 +1,7 @@
 #' App team tab
 #'
 #' @return NULL
+#' @export
 tab_team <- function(){
   shiny::tabPanel(
     "Modelling team",

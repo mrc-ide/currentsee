@@ -270,7 +270,7 @@ add_line_breaks_smart <- function(x, width = 80, break_words = FALSE) {
 #' @export
 nodes_up <- function(dat){
   up <- dat |>
-    dplyr::select(dplyr::any_of(c("0", "1", "2", "3"))) |>
+    dplyr::select(dplyr::any_of(paste(0:20))) |>
     dplyr::select(dplyr::where(~!all(is.na(.x))))
 
   up_nodes <- apply(up, 2, function(x){
@@ -309,7 +309,7 @@ nodes_up <- function(dat){
 #' @export
 nodes_down <- function(dat){
   down <- dat |>
-    dplyr::select(dplyr::any_of(c("0", "-1", "-2", "-3"))) |>
+    dplyr::select(dplyr::any_of(paste(0:-20))) |>
     dplyr::select(dplyr::where(~!all(is.na(.x))))
 
   down_nodes <- apply(down, 2, function(x){
