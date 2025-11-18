@@ -26,198 +26,22 @@ ui <-
       theme = shinythemes::shinytheme("readable"),
 
       # Page 1: Introduction -------------------------------------------------------
-      tabPanel(
-        "Introduction",
-        fluidPage(
-          h2("Welcome to the M3CPI App"),
-
-          p("This application provides guidance on malaria intervention strategies across representative epidemiological
-                settings in sub-Saharan Africa. The recommended intervention packages correspond to the most cost-effective
-                configurations for scaling interventions up or down in response to changing budgets. Optimal strategies explicitly
-                account for uncertainty arising from the simulation process, model parameters, and cost assumptions.."),
-
-          h3("Key aspects to keep in mind:"),
-
-          # --- List of key messages ---
-          tags$ul(
-            tags$li(
-              tags$b("Simulations are built on established models:"),
-              tags$br(),
-              "Results are based on two well-established malaria transmission models calibrated to historical data and representative of sub-Saharan African settings. ",
-              "Both models were implemented in parallel, and their outputs were compared and combined to assess the robustness of the results.",
-              tags$br(),
-              "For further details on the modelling framework and methods, please see the Methods tab."),
-
-            tags$br(),
-            tags$li(
-              tags$b("Epidemiological results are integrated with cost-effectiveness analysis:"),
-              tags$br(),
-              "Epidemiological outputs were combined with intervention and case-management costs, along with their associated uncertainties. ",
-              "Cost-effectiveness was evaluated under varying budget constraints to identify the most efficient allocation of resources."
-            ),
-
-            tags$br(),
-            tags$li(
-              tags$b("Results shown here are applicable to archetypal settings:"),
-              tags$br(),
-              "The analyses provide a generic overview of how malaria interventions can be scaled up or down in settings with similar transmission intensity, ",
-              "seasonality, and historical intervention coverage."
-            )
-          ),
-
-
-          # --- Warning box (outside of the list, no bullet) ---
-          tags$div(
-            style = "background-color:#fff3cd; border-left:4px solid #ffcc00; padding:12px; margin:20px 0; border-radius:6px;",
-            tags$b("⚠️ Important: "),
-            "This tool provides general guidance. Outputs should not be interpreted as country-specific recommendations. ",
-            "For detailed local decision-making, consult context-specific modelling studies."
-          ),
-
-
-          tags$ul(
-            tags$li(
-              tags$b("Results highlight uncertainty across simulations:"),
-              tags$br(),
-              "Multiple simulations were conducted for each scenario to capture uncertainty arising from model structure, parameter variation, ",
-              "and stochastic processes. Results represent a range of possible strategies, highlighting both commonly optimal intervention packages ",
-              "and alternative, less frequent outcomes."
-            )
-          )
-        )
-      ),
+      tab_introduction(),
       # ----------------------------------------------------------------------------
 
       # Page 2: Methods -------------------------------------------------------
-
-      tabPanel(
-        "Methods",
-        fluidPage(
-
-          h2("Methods and modelling approaches"),
-
-          # --- SECTION I ---
-          tags$h3("I. Modelling Framework"),
-
-          tags$p(
-            "The analyses presented here rely on aggregated outputs from two malaria transmission models: ",
-            tags$a(tags$b("malariasimulation"), href = "https://mrc-ide.github.io/malariasimulation/", target = "_blank"),
-            " and ",
-            tags$a(tags$b("OpenMalaria. "), href = "https://github.com/SwissTPH/openmalaria", target = "_blank"),
-            "Each model explored future scenarios to assess the impact of a suite of malaria intervention packages ",
-            "at the subnational level (admin 1 regions) across sub-Saharan Africa."
-          ),
-
-          tags$p(
-            "Both models were calibrated and customised for individual admin 1 regions, incorporating context-specific factors ",
-            "that influence historical infection patterns, intervention efficacy, and observed malaria prevalence."
-          ),
-
-          tags$div(
-            style = "background-color:#f9f9f9; border-left:4px solid #0072B2; padding:10px; margin:20px 0; border-radius:6px;",
-            tags$img(src = "modelling approach.png",
-                     width = "100%",
-                     style = "max-width:600px; border-radius:8px; margin:10px 0;"),
-            tags$br(),
-            tags$b("Figure 1. Schematic representation of the modelling approach at the admin 1 level: "),
-            "Models are calibrated using global estimates from the Malaria Atlas Project to accurately represent each admin 1 region ",
-            "and reproduce historical malaria burden trends. Calibrated models are then used to conduct scenario analyses ",
-            "and assess cost-effectiveness at the admin 1 level."
-          ),
-
-          tags$br(),
-
-          # --- SECTION II ---
-          tags$h3("II. Interventions Assessed"),
-
-          tags$p(
-            "The following interventions were evaluated in all possible combinations, starting from the strategy currently implemented ",
-            "in each administrative unit (the ",
-            tags$b("Business as Usual (BAU)"),
-            "), with its corresponding coverage levels. Scenarios were generated by adding new interventions or increasing ",
-            "the coverage of existing ones:"
-          ),
-
-          tags$ul(
-            tags$li("Insecticide-treated bed nets (ITNs)"),
-            tags$li("Chemoprevention: Seasonal (SMC) or perennial (PMC)"),
-            tags$li("Indoor residual spraying (IRS)"),
-            tags$li("Vaccine"),
-            tags$li("Case management(CM)")
-          ),
-
-          tags$br(),
-
-          # --- SECTION III ---
-          tags$h3("III. Health Impact and Cost-Effectiveness"),
-
-          tags$p(
-            "To estimate the impact of each intervention package, results were compared against the BAU scenario."
-          ),
-
-          tags$b("Health outcomes evaluated:"),
-          tags$ul(
-            tags$li("Incidence – number of new malaria cases over time"),
-            tags$li("Cases averted – reduction in malaria cases relative to the BAU"),
-            tags$li("Deaths averted – reduction in malaria-related mortality relative to the BAU"),
-            tags$li("DALYs averted – disability-adjusted life years gained through reduced morbidity and mortality")
-          ),
-
-          tags$p(
-            "Health outcomes were estimated for three age groups (0–5 years, 5–15 years, and 15 years and above) ",
-            "and across both short- and long-term time horizons."
-          ),
-
-          tags$p(
-            "Costs for each intervention were derived from WHO estimates for intervention and case-management costs. ",
-            "The most cost-effective intervention package at each budget level was identified using a frontier approach, ",
-            "providing guidance on how to cost-effectively scale interventions up or down from current coverage levels."
-          ),
-
-          tags$br(),
-
-          # --- SECTION IV ---
-          tags$h3("IV. Setting Archetypes and Model Harmonisation"),
-
-          tags$p(
-            "Results from both models were harmonised and grouped into representative archetypes. ",
-            "Each archetype captures common patterns in how optimal intervention strategies change with budget levels ",
-            "across similar epidemiological settings."
-          ),
-
-          tags$p(
-            "Simulations were run across a range of realistic scenarios, and settings showing similar decision-making trends ",
-            "were aggregated. This allows general insights to be drawn — for example, identifying which intervention combinations ",
-            "are consistently prioritised in settings with comparable transmission intensity, seasonality, and historical coverage."
-          ),
-
-          tags$div(
-            style = "background-color:#fff3cd; border-left:4px solid #ffcc00; padding:12px; margin:25px 0; border-radius:6px;",
-            tags$b("⚠️ Limitations"),
-            tags$ul(
-              tags$li("Aggregation of results smooths over local heterogeneities."),
-              tags$li("Outputs are indicative and meant to inform, not prescribe, interventions.")
-            )
-          )
-        )
-
-      ),
-
+      tab_methods(),
       # ----------------------------------------------------------------------------
 
       # Page 3: How to interpret output --------------------------------------------
       tabPanel(
         "How to interpret output",
         fluidPage(
-          bslib::card(
-            bslib::card_header("Reading the Sankey outputs"),
-            p("Placeholder guidance on interpreting the visualisations and metrics."),
-            tags$ul(
-              tags$li("What each node and link represents."),
-              tags$li("Direction of flow and sign conventions."),
-              tags$li("Any thresholds, filters, or assumptions to keep in mind.")
-            ),
-            p("You can expand this section later with examples and screenshots.")
+          tags$iframe(
+            src = "sankey_101.pdf",
+            width = "100%",
+            height = "600px",
+            style = "border: none;"
           )
         )
       ),
@@ -272,103 +96,11 @@ ui <-
       # ----------------------------------------------------------------------------
 
       # Page 4: FAQs ---------------------------------------------------------------
-      tabPanel(
-        "FAQs",
-        fluidPage(
-          bslib::card(
-            # Each question and answer pair --------------------------
-            tags$div(
-              tags$span(
-                shiny::icon("lightbulb"),
-                tags$b(" What does the Sankey diagram show?")
-              ),
-              br(),
-              p("Each node represents an intervention or combination of interventions.
-           The links show how resources or impact shift between scenarios.
-           Thicker links indicate larger changes."),
-              br()
-            ),
-
-            tags$div(
-              tags$span(
-                shiny::icon("lightbulb"),
-                tags$b(" Why can’t I see a Sankey when I open the app?")
-              ),
-              p("You need to select a baseline 'current' value in the filters on the
-           left-hand side. Once you do, the Sankey will appear."),
-              br()
-            ),
-
-            tags$div(
-              tags$span(
-                shiny::icon("lightbulb"),
-                tags$b("  What does ‘No matching pathways’ mean?")
-              ),
-              p("This appears when your chosen filters return no data—try broadening
-           your selections or resetting one of the filters to 'All'."),
-              br()
-            )
-            # ---------------------------------------------------------
-          )
-        )
-      ),
+      tab_faqs(),
+      # ----------------------------------------------------------------------------
 
       # Page 5: Modelling team -----------------------------------------------------
-      tabPanel(
-        "Modelling team",
-        fluidPage(
-          h3("Meet the team"),
-          br(),
-          br(),
-          bslib::layout_column_wrap(
-            width = 300, heights_equal = "all",
-            contact_card(
-              name = "Emilie Pothin",
-              role = "Project lead",
-              org  = "SwissTPH",
-              email = "emilie.pothin@swisstph.ch",
-              photo = "Emilie_Pothin.png"
-            ),
-            contact_card(
-              name = "Peter Winskill",
-              role = "Project lead",
-              org  = "Imperial College London",
-              email = "p.winskill@imperial.ac.uk",
-              photo = "Pete_Winskill.jpg"
-            ),
-            contact_card(
-              name = "Monica Golumbeanu",
-              role = "Senior Modeller",
-              org  = "SwissTPH",
-              photo = "Monica_Golumbeanu.png"
-            ),
-            contact_card(
-              name = "Tom Brewer",
-              role = "Senior Modeller",
-              org  = "Imperial College London",
-              photo = "Tom_Brewer.jpg"
-            ),
-            contact_card(
-              name = "Leandro Gandos Brito",
-              role = "Methodology and implementation",
-              org  = "SwissTPH",
-              photo = "Leandro_Gandos_Brito.jpg"
-            ),
-            contact_card(
-              name = "Dariya Nikitin",
-              role = "Methodology and implementation",
-              org  = "Imperial College London",
-              photo = "Dariya_Nikitin.jpg"
-            ),
-            contact_card(
-              name = "Daniela Olivera Mesa",
-              role = "App development",
-              org  = "Imperial College London",
-              photo = "Daniela_Olivera_Mesa.jpg"
-            )
-          )
-        )
-      )
+      tab_team()
       # ----------------------------------------------------------------------------
     )
   )
@@ -545,15 +277,7 @@ server <- function(input, output, session) {
   #    Returns a list(nodes_up, links_up, nodes_down, links_down)
   # ---------------------------------------------------------------------------
   sankey_inputs <- reactive({
-    d <- current_subset()
-
-    up   <- nodes_up(d)
-    down <- nodes_down(d)
-
-    list(
-      down = down,
-      up   = up
-    )
+    current_subset()
   })
 
 
@@ -591,14 +315,14 @@ server <- function(input, output, session) {
     f <- sankey_inputs()
     validate(
       need(
-        nrow(f$up$up) > 0,
+        nrow(f) > 0,
         "No matching pathways for this combination of filters."
       )
     )
 
     make_sankey(
-      f$up$up,
-      f$up$up_nodes,
+      f,
+      "up",
       node_width = 0.3,
       flow_label_font_size = 4,
       node_label_font_size = 5
@@ -607,7 +331,7 @@ server <- function(input, output, session) {
 
   output$sankey_up_container <- renderUI({
     f <- sankey_inputs()
-    n_cols <- ncol(f$up$up)
+    n_cols <- sum(names(f[, !sapply(f, function(x) all(is.na(x)))]) %in% paste(0:20))
     plot_width <- n_cols * 220
 
     plotOutput(
@@ -640,14 +364,14 @@ server <- function(input, output, session) {
     f <- sankey_inputs()
     validate(
       need(
-        nrow(f$down$down) > 0,
+        nrow(f) > 0,
         "No matching pathways for this combination of filters."
       )
     )
 
     currentsee::make_sankey(
-      f$down$down,
-      f$down$down_nodes,
+      f,
+      "down",
       node_width = 0.25,
       flow_label_font_size = 4,
       node_label_font_size = 5
@@ -656,7 +380,7 @@ server <- function(input, output, session) {
 
   output$sankey_down_container <- renderUI({
     f <- sankey_inputs()
-    n_cols <- ncol(f$down$down)
+    n_cols <- sum(names(f[, !sapply(f, function(x) all(is.na(x)))]) %in% paste(0:-20))
     plot_width <- n_cols * 200
 
     plotOutput(
