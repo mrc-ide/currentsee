@@ -5,6 +5,7 @@ library(shiny)
 library(bslib)
 library(dplyr)
 library(tidyr)
+library(bsicons)
 
 ui <-
   fluidPage(
@@ -56,6 +57,9 @@ ui <-
           br(),
           sidebarLayout(
             sidebarPanel(
+
+              uiOutput("dynamic_value_box"),
+
               # Dynamic filter inputs --------------------------------------------
               uiOutput("dynamic_filters"),
               br(),
@@ -120,6 +124,7 @@ server <- function(input, output, session) {
   #    Starts as df from opts, replaced on upload after validation.
   # ---------------------------------------------------------------------------
   df_current <- reactiveVal(df)
+
 
   # ---------------------------------------------------------------------------
   # 2. Handle CSV upload with sanity checks.
@@ -390,6 +395,75 @@ server <- function(input, output, session) {
     )
   })
 
+  # ---------------------------------------------------------------------------
+  # Calculate and display filtering percentage
+  # ---------------------------------------------------------------------------
+  output$filter_percentage <- renderText({
+    original_rows <- nrow(df_current())  # Denominator: original data
+    filtered_rows <- nrow(current_subset())  # Numerator: filtered data
+
+    if (original_rows == 0) {
+      percentage <- 0
+    } else {
+      percentage <- round((filtered_rows / original_rows) * 100, 1)
+    }
+
+    paste0(percentage, "%")
+  })
+
+  # Optional: Dynamic % coverage
+  output$dynamic_value_box <- renderUI({
+    original_rows <- nrow(df_current())
+    filtered_rows <- nrow(current_subset())
+
+    if (original_rows == 0) {
+      percentage <- 0
+    } else {
+      percentage <- round((filtered_rows / original_rows) * 100, 1)
+    }
+
+    # Custom color for smooth gradient
+    bg_color <- if (percentage >= 80) "#28a745"
+    else if (percentage >= 60) "#6cb04a"
+    else if (percentage >= 40) "#9bc53d"
+    else if (percentage >= 25) "#ffc107"
+    else if (percentage >= 15) "#fd7e14"
+    else "#dc3545"
+
+    # Warning for very low coverage
+    subtitle_text <- if (percentage < 10) {
+      div(
+        style = "font-size: 0.9em; margin-top: 8px; font-weight: bold;",
+        "\u26a0 very low coverage"
+      )
+    } else {
+      NULL
+    }
+
+    # Fully custom value box
+    div(
+      style = paste0(
+        "background: linear-gradient(135deg, ", bg_color, " 0%, ",
+        adjustcolor(bg_color, alpha.f = 0.8), " 100%); ",
+        "border-radius: 12px; padding: 20px; text-align: center; ",
+        "color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); ",
+        "margin-bottom: 20px; transition: all 0.3s ease;"
+      ),
+      # Title row
+      div(
+        style = "display: flex; align-items: center; justify-content: center; margin-bottom: 10px;",
+        bsicons::bs_icon("funnel", size = "1.2em", style = "margin-right: 8px;"),
+        span(" Data Coverage", style = "font-size: 1.2em; font-weight: 500;")
+      ),
+      # Percentage value
+      div(
+        style = "font-size: 2.5em; font-weight: bold; margin-bottom: 5px;",
+        paste0(percentage, "%")
+      ),
+      # Subtitle/warning
+      subtitle_text
+    )
+  })
 }
 
 shinyApp(ui, server)

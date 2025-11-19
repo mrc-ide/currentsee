@@ -1,6 +1,6 @@
 Package: currentsee
 Title: Sankey diagrams for malaria CE analysis
-Version: 1.0.1
+Version: 1.0.2
 Authors@R: c(
     person("Pete", "Winskill", email = "p.winskill@imperial.ac.uk", role = c("aut", "cre"))
     )
@@ -17,6 +17,7 @@ Imports:
     shiny,
     rlang,
     bslib,
+    bsicons,
     RColorBrewer,
     ggplot2,
     ggnewscale,
