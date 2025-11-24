@@ -37,8 +37,6 @@ make_sankey(
 \item{flow_alpha}{Numeric. Transparency of flow ribbons (default: 0.3)}
 
 \item{gradient_res}{Integer. Resolution of flow gradients for smoothness (default: 3000)}
-
-\item{direction}{String "up", "down", or "updown" to determine flow direction}
 }
 \value{
 ggplot2 object representing the Sankey diagram

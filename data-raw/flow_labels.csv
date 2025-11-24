@@ -60,3 +60,4 @@ flow_start,flow_end,flow_label
 "cm, itn, vaccine","cm, itn, irs, vaccine",Add irs
 "cm, itn, chem","cm, itn, irs, chem",Add irs
 "cm, itn, chem, vaccine","cm, itn, irs, chem, vaccine",Add irs
+"cm, itn","cm, itn, irs",Add irs

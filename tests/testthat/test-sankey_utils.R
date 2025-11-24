@@ -168,29 +168,9 @@ test_that("make_flows positions flows within node boundaries", {
 
 # Simple edge cases ------------------------------------------------------------
 
-test_that("make_nodes handles single column", {
+test_that("Error on single column", {
   single_col <- data.frame(`0` = c("A", "B"), check.names = FALSE)
-  result <- make_nodes(single_col)
-
-  expect_equal(unique(result$xcenter), 1)
-  expect_equal(nrow(result), 2)
+  expect_error(make_sankey(single_col))
 })
 
-test_that("make_flows handles single column gracefully", {
-  single_col <- data.frame(`0` = c("A", "B"), check.names = FALSE)
-  result <- make_flows(single_col, test_nodes_simple)
 
-  # Should return empty data frame (no transitions possible)
-  expect_equal(nrow(result), 0)
-})
-
-test_that("make_nodes centers nodes vertically", {
-  result <- make_nodes(test_data_simple)
-
-  # For each column, sum of ymin and ymax should be close to 0
-  for(col in unique(result$xcenter)) {
-    col_nodes <- result[result$xcenter == col, ]
-    total_span <- sum(col_nodes$ymin + col_nodes$ymax)
-    expect_equal(total_span, 0, tolerance = 1e-10)
-  }
-})

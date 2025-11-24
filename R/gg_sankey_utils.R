@@ -144,28 +144,28 @@ make_flows <- function(x, nodes){
       label_end = ifelse(.data$direction == "down",.data$flow_start,.data$flow_end)
     ) |>
     dplyr::left_join(
-      flow_labels,
+      currentsee::flow_labels,
       by = c("label_start"  = "flow_start", "label_end" = "flow_end")
     ) |>
-    dplyr::select(-label_start, -label_end) |>
+    dplyr::select(-.data$label_start, -.data$label_end) |>
     # Flow starts and ends
     dplyr::mutate(
-      flow_start_x = xmax_start,
-      flow_end_x = xmin_end
+      flow_start_x = .data$xmax_start,
+      flow_end_x = .data$xmin_end
     ) |>
     # ADD NODE CENTER POSITIONS FOR SORTING
     dplyr::left_join(
-      dplyr::select(nodes, node, ycenter),
+      dplyr::select(nodes, .data$node, .data$ycenter),
       by = c("flow_start" = "node")
     ) |>
-    dplyr::rename(start_center = ycenter) |>
+    dplyr::rename("start_center" = "ycenter") |>
     dplyr::left_join(
-      dplyr::select(nodes, node, ycenter),
+      dplyr::select(nodes, .data$node, .data$ycenter),
       by = c("flow_end" = "node")
     ) |>
-    dplyr::rename(end_center = ycenter) |>
+    dplyr::rename("end_center" = "ycenter") |>
     # Sort for start position
-    dplyr::arrange(.data$flow_start,.data$end_center) |>  # Sort by start node, then by end node position
+    dplyr::arrange(.data$flow_start, .data$end_center) |>  # Sort by start node, then by end node position
     # Calculate start positions
     dplyr::mutate(
       flow_start_ymin =.data$ymin_start + c(0, utils::head(cumsum(.data$n), -1)),
@@ -173,7 +173,7 @@ make_flows <- function(x, nodes){
       .by = "flow_start"
     ) |>
     # sort for end position
-    dplyr::arrange(.data$flow_end,.data$start_center) |>  # Sort by end node, then by start node position
+    dplyr::arrange(.data$flow_end, .data$start_center) |>  # Sort by end node, then by start node position
     # Calculate end positions
     dplyr::mutate(
       flow_end_ymin =.data$ymin_end + c(0, utils::head(cumsum(.data$n), -1)),
@@ -181,16 +181,16 @@ make_flows <- function(x, nodes){
       .by = "flow_end"
     ) |>
     # Clean up temporary columns
-    dplyr::select(-start_center, -end_center) |>
+    dplyr::select(-.data$start_center, -.data$end_center) |>
     dplyr::mutate(
       flow_start_center =.data$flow_start_ymin + ((.data$flow_start_ymax -.data$flow_start_ymin) / 2),
       flow_end_center =.data$flow_end_ymin + ((.data$flow_end_ymax -.data$flow_end_ymin) / 2)
     ) |>
     # Labels
     dplyr::mutate(
-      hjust = ifelse(direction == "down", 1, 0),
-      label_x = ifelse(direction == "down",.data$flow_end_x,.data$flow_start_x),
-      label_y = ifelse(direction == "down",.data$flow_end_center,.data$flow_start_center)
+      hjust = ifelse(.data$direction == "down", 1, 0),
+      label_x = ifelse(.data$direction == "down",.data$flow_end_x,.data$flow_start_x),
+      label_y = ifelse(.data$direction == "down",.data$flow_end_center,.data$flow_start_center)
     )
 
   return(transitions)
@@ -219,15 +219,15 @@ create_flow_curves <- function(flows, nodes, gradient_resolution = 2000) {
   # Join flows with node colors for start and end nodes
   flows_with_colors <- flows |>
     dplyr::left_join(
-      dplyr::select(nodes, node, colour),
+      dplyr::select(nodes, .data$node, .data$colour),
       by = c("flow_start" = "node")
     ) |>
-    dplyr::rename(color_start = colour) |>
+    dplyr::rename("color_start" = "colour") |>
     dplyr::left_join(
-      dplyr::select(nodes, node, colour),
+      dplyr::select(nodes, .data$node, .data$colour),
       by = c("flow_end" = "node")
     ) |>
-    dplyr::rename(color_end = colour)
+    dplyr::rename("color_end" = "colour")
 
   # Create the flow curves with color gradients
   flows_with_colors |>

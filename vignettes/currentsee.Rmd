@@ -65,7 +65,7 @@ in the RStudio viewer or an HTML document.
 
 ```{r sankey, out.width='100%'}
 make_sankey(
-  df, "up"
+  df[,paste(0:3)]
 )
 
 ```

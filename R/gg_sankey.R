@@ -4,7 +4,6 @@
 #' from a central current state, with direction-appropriate flow labels and alignment.
 #'
 #' @param x Data frame where each column represents a step and each row represents a flow path
-#' @param direction String "up", "down", or "updown" to determine flow direction
 #' @param flow_labels Data frame with columns 'flow_start', 'flow_end', 'flow_label' for custom flow labels (optional)
 #' @param colours Data frame with columns 'node' and 'colour' for custom node colours, or named vector (optional)
 #' @param node_width Numeric. Width of node rectangles (default: 0.05)
@@ -33,7 +32,9 @@ make_sankey <- function(
   # Remove any all NA cols
   x <- x[,apply(x, 2, function(x){
     !all(is.na(x))
-  })]
+  }), drop = FALSE]
+
+  stopifnot(ncol(x) > 1)
 
   # Make node, flows and curves
   nodes <- make_nodes(x, node_width = 0.1)
