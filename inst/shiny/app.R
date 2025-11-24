@@ -1,6 +1,10 @@
 opts <- getOption("currentsee.app")
 df <- opts$df
 
+steps <- names(df)[names(df) %in% paste(-20:20)] |>
+  as.numeric() |>
+  sort()
+
 library(shiny)
 library(bslib)
 library(dplyr)
@@ -326,8 +330,7 @@ server <- function(input, output, session) {
     )
 
     make_sankey(
-      f,
-      "up",
+      f[,paste(steps[steps >= 0])],
       node_width = 0.3,
       flow_label_font_size = 4,
       node_label_font_size = 5
@@ -375,8 +378,7 @@ server <- function(input, output, session) {
     )
 
     currentsee::make_sankey(
-      f,
-      "down",
+      f[,paste(steps[steps <= 0])],
       node_width = 0.25,
       flow_label_font_size = 4,
       node_label_font_size = 5

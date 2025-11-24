@@ -2,13 +2,12 @@
 % Please edit documentation in R/gg_sankey.R
 \name{make_sankey}
 \alias{make_sankey}
-\title{Create Sankey diagram}
+\title{Create bidirectional Sankey diagram}
 \usage{
 make_sankey(
   x,
-  direction,
-  flow_labels = currentsee::flow_labels,
-  colours = currentsee::colours_df,
+  flow_labels = NULL,
+  colours = NULL,
   node_width = 0.05,
   node_label_font_size = 3,
   flow_label_font_size = 2.5,
@@ -20,8 +19,6 @@ make_sankey(
 }
 \arguments{
 \item{x}{Data frame where each column represents a step and each row represents a flow path}
-
-\item{direction}{String "up" or "down" to determine prioritisation or deprioritisation flow}
 
 \item{flow_labels}{Data frame with columns 'flow_start', 'flow_end', 'flow_label' for custom flow labels (optional)}
 
@@ -40,11 +37,13 @@ make_sankey(
 \item{flow_alpha}{Numeric. Transparency of flow ribbons (default: 0.3)}
 
 \item{gradient_res}{Integer. Resolution of flow gradients for smoothness (default: 3000)}
+
+\item{direction}{String "up", "down", or "updown" to determine flow direction}
 }
 \value{
 ggplot2 object representing the Sankey diagram
 }
 \description{
-Generates a Sankey diagram with customizable nodes, flows, colours, and labels.
-Supports dead-end flows (NA values), custom labeling, and flexible styling options.
+Generates a Sankey diagram that can flow both left (down/removing) and right (up/adding)
+from a central current state, with direction-appropriate flow labels and alignment.
 }

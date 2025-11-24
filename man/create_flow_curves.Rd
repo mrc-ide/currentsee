@@ -2,19 +2,21 @@
 % Please edit documentation in R/gg_sankey_utils.R
 \name{create_flow_curves}
 \alias{create_flow_curves}
-\title{Create detailed flow visualization data with smooth curves}
+\title{Create detailed flow visualization data with node-based color gradients}
 \usage{
-create_flow_curves(df_f_positioned, gradient_resolution = 2000)
+create_flow_curves(flows, nodes, gradient_resolution = 2000)
 }
 \arguments{
-\item{df_f_positioned}{Data frame with positioned flow data including color and coordinate information}
+\item{flows}{Data frame with flow data including flow_start and flow_end node names}
+
+\item{nodes}{Data frame with node information including 'node' and 'colour' columns}
 
 \item{gradient_resolution}{Integer. Number of segments for gradient smoothness (default: 2000)}
 }
 \value{
-Data frame with detailed flow rendering data including color, xmin, xmax, ymin, ymax
+Data frame with detailed flow rendering data including color gradients
 }
 \description{
-Generates the detailed geometric data needed to render smooth gradient flows
-between nodes, including color interpolation and curve coordinates.
+Generates smooth gradient flows between nodes using the actual node colors
+from the nodes data frame for realistic color transitions.
 }
