@@ -11,518 +11,186 @@ library(dplyr)
 library(tidyr)
 library(bsicons)
 
-ui <-
-  fluidPage(
-    # Include the external CSS
-    tags$head(
-      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
+# Helper Functions --------------------------------------------------------
+
+
+# UI Definition -----------------------------------------------------------
+
+ui <- fluidPage(
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
+  ),
+  navbarPage(
+    title = div(
+      class = "app-navbar-brand",
+      img(src = "M3CPI_transparent.png", alt = "M3CPI Logo"),
+      div(
+        class = "app-brand-text",
+        div("M3CPI", class = "app-brand-title"),
+        div("modelling to inform malaria intervention prioritisation",
+            class = "app-brand-subtitle")
+      )
     ),
-    navbarPage(
-      title = div(
-        class = "app-navbar-brand",
-        img(src = "M3CPI_transparent.png", alt = "M3CPI Logo"),
-        div(
-          class = "app-brand-text",
-          div("M3CPI", class = "app-brand-title"),
-          div("modelling to inform malaria intervention prioritisation",
-              class = "app-brand-subtitle")
+    theme = shinythemes::shinytheme("readable"),
+
+    tab_introduction(),
+    tab_methods(),
+
+    tabPanel(
+      "How to interpret output",
+      fluidPage(
+        tags$iframe(
+          src = "sankey_101.pdf",
+          width = "100%",
+          height = "600px",
+          style = "border: none;"
         )
-      ),
-      theme = shinythemes::shinytheme("readable"),
+      )
+    ),
 
-      # Page 1: Introduction -------------------------------------------------------
-      tab_introduction(),
-      # ----------------------------------------------------------------------------
-
-      # Page 2: Methods -------------------------------------------------------
-      tab_methods(),
-      # ----------------------------------------------------------------------------
-
-      # Page 3: How to interpret output --------------------------------------------
-      tabPanel(
-        "How to interpret output",
-        fluidPage(
-          tags$iframe(
-            src = "sankey_101.pdf",
-            width = "100%",
-            height = "600px",
-            style = "border: none;"
-          )
-        )
-      ),
-      # ----------------------------------------------------------------------------
-
-      # Page 3: Output -------------------------------------------------------------
-      tabPanel(
-        "Explore",
-        fluidPage(
-          h3("Cost-effective intervention pathways"),
-          br(),
-          br(),
-          sidebarLayout(
-            sidebarPanel(
-
-              uiOutput("dynamic_value_box"),
-
-              # Dynamic filter inputs --------------------------------------------
-              uiOutput("dynamic_filters"),
-              br(),
-              br(),
-
-              # Optional CSV upload ----------------------------------------------
-              fileInput(
-                "csv_upload",
-                "Upload CSV to replace default inputs",
-                accept = c(".csv", "text/csv", "text/comma-separated-values")
-              ),
-              width = 3
-            ),
-            mainPanel(
-              # Plot type selector
-              div(
-                style = "margin-bottom: 20px;",
-                radioButtons(
-                  "plot_type",
-                  "Select view:",
-                  choices = list(
-                    "Full pathway" = "full",
-                    "Removing interventions" = "down",
-                    "Adding interventions" = "up"
-                  ),
-                  selected = "full",
-                  inline = TRUE
-                )
-              ),
-
-              conditionalPanel(
-                condition = "input.plot_type == 'full'",
-                uiOutput("sankey_container")
-              ),
-              conditionalPanel(
-                condition = "input.plot_type == 'down'",
-                uiOutput("sankey_down_container")
-              ),
-              conditionalPanel(
-                condition = "input.plot_type == 'up'",
-                uiOutput("sankey_up_container")
+    tabPanel(
+      "Explore",
+      fluidPage(
+        h3("Cost-effective intervention pathways"),
+        br(), br(),
+        sidebarLayout(
+          sidebarPanel(
+            uiOutput("coverage_box"),
+            uiOutput("filter_controls"),
+            width = 3
+          ),
+          mainPanel(
+            div(
+              style = "margin-bottom: 20px;",
+              radioButtons(
+                "plot_type",
+                "Select view:",
+                choices = list(
+                  "Full pathway" = "full",
+                  "Removing interventions" = "down",
+                  "Adding interventions" = "up"
+                ),
+                selected = "full",
+                inline = TRUE
               )
+            ),
+            conditionalPanel(
+              condition = "input.plot_type == 'full'",
+              uiOutput("sankey_full_container")
+            ),
+            conditionalPanel(
+              condition = "input.plot_type == 'down'",
+              uiOutput("sankey_down_container")
+            ),
+            conditionalPanel(
+              condition = "input.plot_type == 'up'",
+              uiOutput("sankey_up_container")
             )
           )
         )
-      ),
-      # ----------------------------------------------------------------------------
+      )
+    ),
 
-      # Page 4: FAQs ---------------------------------------------------------------
-      tab_faqs(),
-      # ----------------------------------------------------------------------------
-
-      # Page 5: Modelling team -----------------------------------------------------
-      tab_team()
-      # ----------------------------------------------------------------------------
-    )
+    tab_faqs(),
+    tab_team()
   )
+)
 
+# Server Logic ------------------------------------------------------------
 
 server <- function(input, output, session) {
 
-  # ---------------------------------------------------------------------------
-  # 0. Columns we consider "core" to Sankey construction.
-  #    Everything NOT in this list will become a filter dropdown automatically.
-  #    Adjust this list to match what make_nodes / make_links require.
-  # ---------------------------------------------------------------------------
-  core_cols <- c("-4", "-3", "-2", "-1", "0", "1", "2", "3", "4")
+  # Reactive values
+  filter_vars <- reactive(get_filter_vars(df))
 
-  # ---------------------------------------------------------------------------
-  # 1. Working dataset.
-  #    Starts as df from opts, replaced on upload after validation.
-  # ---------------------------------------------------------------------------
-  df_current <- reactiveVal(df)
-
-
-  # ---------------------------------------------------------------------------
-  # 2. Handle CSV upload with sanity checks.
-  # ---------------------------------------------------------------------------
-  observeEvent(input$csv_upload, {
-    req(input$csv_upload)
-
-    d_new <- tryCatch(
-      read.csv(input$csv_upload$datapath, check.names = FALSE),
-      error = function(e) NULL
-    )
-
-    required_cols <- c("step", "current")  # minimal cols to proceed
-    missing_cols <- setdiff(required_cols, names(d_new))
-
-    if (is.null(d_new) || length(missing_cols) > 0) {
-      showModal(modalDialog(
-        title = "Upload error",
-        paste0(
-          "The uploaded file is missing required columns: ",
-          paste(missing_cols, collapse = ", "),
-          ". Please upload a file with at least these columns."
-        ),
-        easyClose = TRUE,
-        footer = modalButton("OK")
-      ))
-      return(NULL)
-    }
-
-    df_current(d_new)
+  filtered_data <- reactive({
+    apply_filters(df, filter_vars(), input)
   })
 
-
-  # ---------------------------------------------------------------------------
-  # 3. filter_vars(): which columns should get dropdowns?
-  #    It's all non-core columns in the *current* data, excluding anything
-  #    that looks continuous/too granular if you want to be picky.
-  #    For now we include everything that's not in core_cols.
-  # ---------------------------------------------------------------------------
-  filter_vars <- reactive({
-    d <- df_current()
-    c("current", setdiff(names(d), c("current", core_cols)))
-  })
-
-
-  # ---------------------------------------------------------------------------
-  # 4. current_subset(): apply all active filter selections to df_current().
-  #    For each filter var v:
-  #       - if input[[v]] is NULL or "All", we don't filter on v
-  #       - otherwise we keep only rows matching that value
-  # ---------------------------------------------------------------------------
-  current_subset <- reactive({
-    d <- df_current()
+  # Dynamic filter controls
+  output$filter_controls <- renderUI({
     fvars <- filter_vars()
 
-    if (length(fvars) == 0) {
-      return(d)
-    }
-
-    for (v in fvars) {
-      sel <- input[[v]]
-      if (!is.null(sel) && sel != "All") {
-        d <- d[d[[v]] == sel, , drop = FALSE]
-      }
-    }
-
-    d
-  })
-
-
-  # ---------------------------------------------------------------------------
-  # 5. Render the dynamic filter dropdowns initially.
-  #    We create one selectInput per filter var.
-  #    Each starts at "All".
-  #    (We'll keep them in sync in the observer below.)
-  # ---------------------------------------------------------------------------
-  output$dynamic_filters <- renderUI({
-    d <- df_current()
-    fvars <- filter_vars()
-
-    lapply(fvars, function(v) {
-      vals <- sort(unique(as.character(d[[v]])))
+    lapply(fvars, function(var) {
+      values <- sort(unique(as.character(df[[var]])))
       selectInput(
-        inputId   = v,
-        label     = v,
-        choices   = c("All", vals),
-        selected  = "All",
+        inputId = var,
+        label = var,
+        choices = c("All", values),
+        selected = "All",
         selectize = TRUE
       )
     })
   })
 
-
-  # ---------------------------------------------------------------------------
-  # 6. Keep dropdowns mutually consistent.
-  #
-  #    Idea:
-  #    - For each filter var v, we update its choices based on all the OTHER
-  #      filters' current selections.
-  #
-  #    Why not just use current_subset() for all of them?
-  #    Because that would lock v to its existing selection immediately.
-  #    Instead, for each v we:
-  #       1. start from full df_current()
-  #       2. apply all filters EXCEPT v
-  #       3. whatever unique values remain in column v become its allowed choices
-  #
-  #    We also try to keep your current selection if it's still valid.
-  # ---------------------------------------------------------------------------
+  # Keep filter dropdowns mutually consistent
   observe({
-    d_full <- df_current()
-    fvars  <- filter_vars()
+    fvars <- filter_vars()
 
-    # Nothing to do if we don't have any filter vars yet (e.g. before upload).
-    if (length(fvars) == 0) {
-      return(NULL)
-    }
+    if (length(fvars) == 0) return(NULL)
 
-    for (v in fvars) {
-
-      # Build "partial subset" applying all filters except v
-      d_partial <- d_full
-      for (u in fvars) {
-        if (u == v) next
-        sel_u <- input[[u]]
-        if (!is.null(sel_u) && sel_u != "All") {
-          d_partial <- d_partial[d_partial[[u]] == sel_u, , drop = FALSE]
+    for (var in fvars) {
+      # Apply all filters except the current one
+      partial_data <- df
+      for (other_var in fvars) {
+        if (other_var == var) next
+        selection <- input[[other_var]]
+        if (!is.null(selection) && selection != "All") {
+          partial_data <- partial_data[partial_data[[other_var]] == selection, , drop = FALSE]
         }
       }
 
-      # Valid choices for v under other filters
-      poss_vals <- sort(unique(as.character(d_partial[[v]])))
-      poss_choices <- c("All", poss_vals)
+      # Update choices based on remaining valid values
+      valid_values <- sort(unique(as.character(partial_data[[var]])))
+      valid_choices <- c("All", valid_values)
 
-      # Keep current selection if it's still valid, else "All"
-      current_sel <- isolate(input[[v]])
-      if (is.null(current_sel) || !(current_sel %in% poss_choices)) {
-        current_sel <- "All"
+      # Preserve current selection if still valid
+      current_selection <- isolate(input[[var]])
+      if (is.null(current_selection) || !(current_selection %in% valid_choices)) {
+        current_selection <- "All"
       }
 
       updateSelectInput(
         session,
-        inputId  = v,
-        choices  = poss_choices,
-        selected = current_sel
+        inputId = var,
+        choices = valid_choices,
+        selected = current_selection
       )
     }
   })
 
-
-  # ---------------------------------------------------------------------------
-  # 7. Helper: given a subsetted df, build the Sankey node/link inputs.
-  #    - Split into up/down by step sign
-  #    - Call your helper fns
-  #    Returns a list(nodes_up, links_up, nodes_down, links_down)
-  # ---------------------------------------------------------------------------
-  sankey_inputs <- reactive({
-    current_subset()
+  # Coverage indicator
+  output$coverage_box <- renderUI({
+    create_coverage_box(nrow(df), nrow(filtered_data()))
   })
 
-
-  # ---------------------------------------------------------------------------
-  # 8. Render "Increasing spend" Sankey.
-  #
-  #    We still require that "current" is pinned down sensibly,
-  #    because the story you're telling needs a specific 'current'
-  #    (or at least not "All").
-  #
-  #    current is in core_cols, not guaranteed to be in filter_vars,
-  #    so we read it out of the *subset*.
-  #
-  #    We'll accept this if there's exactly one non-NA current in the subset
-  #    and it's not "All".
-  # ---------------------------------------------------------------------------
-  output$sankey_up <- renderPlot({
-    d_use <- current_subset()
-
-    # Check current is defined sensibly in the subset
-    current_vals <- unique(as.character(d_use$current))
-    current_vals <- current_vals[!is.na(current_vals)]
-
-    validate(
-      need(
-        length(current_vals) == 1 && current_vals != "All",
-        "Choose a value for ‘current’ in the left panel to show the Sankey."
-      ),
-      need(
-        nrow(d_use) > 0,
-        "No matching pathways for this combination of filters."
-      )
-    )
-
-    f <- sankey_inputs()
-    validate(
-      need(
-        nrow(f) > 0,
-        "No matching pathways for this combination of filters."
-      )
-    )
-
-    make_sankey(
-      f[,paste(steps[steps >= 0])],
-      node_width = 0.2,
-      flow_label_font_size = 4,
-      node_label_font_size = 5
-    )
+  # Sankey plot renderers
+  output$sankey_full <- renderPlot({
+    create_sankey_plot(filtered_data(), paste(steps))
   })
 
-  output$sankey_up_container <- renderUI({
-    f <- sankey_inputs()
-    n_cols <- sum(names(f[, !sapply(f, function(x) all(is.na(x)))]) %in% paste(0:20))
-    plot_width <- n_cols * 220
-
-    plotOutput(
-      "sankey_up",
-      height = "500px",
-      width = paste0(plot_width, "px")
-    )
-  })
-
-
-  # ---------------------------------------------------------------------------
-  # 9. Render "Decreasing spend" Sankey (mirror logic).
-  # ---------------------------------------------------------------------------
   output$sankey_down <- renderPlot({
-    d_use <- current_subset()
+    create_sankey_plot(filtered_data(), paste(steps[steps <= 0]))
+  })
 
-    current_vals <- unique(as.character(d_use$current))
-    current_vals <- current_vals[!is.na(current_vals)]
-    validate(
-      need(
-        length(current_vals) == 1 && current_vals != "All",
-        "Choose a value for ‘current’ in the left panel to show the Sankey."
-      ),
-      need(
-        nrow(d_use) > 0,
-        "No matching pathways for this combination of filters."
-      )
-    )
+  output$sankey_up <- renderPlot({
+    create_sankey_plot(filtered_data(), paste(steps[steps >= 0]))
+  })
 
-    f <- sankey_inputs()
-    validate(
-      need(
-        nrow(f) > 0,
-        "No matching pathways for this combination of filters."
-      )
-    )
-
-    currentsee::make_sankey(
-      f[,paste(steps[steps <= 0])],
-      node_width = 0.2,
-      flow_label_font_size = 4,
-      node_label_font_size = 5
-    )
+  # Dynamic plot containers with appropriate widths
+  output$sankey_full_container <- renderUI({
+    plot_width <- calculate_plot_width(filtered_data(), -20:20, 200)
+    plotOutput("sankey_full", height = "500px", width = paste0(plot_width, "px"))
   })
 
   output$sankey_down_container <- renderUI({
-    f <- sankey_inputs()
-    n_cols <- sum(names(f[, !sapply(f, function(x) all(is.na(x)))]) %in% paste(0:-20))
-    plot_width <- n_cols * 220
-
-    plotOutput(
-      "sankey_down",
-      height = "500px",
-      width = paste0(plot_width, "px")
-    )
+    plot_width <- calculate_plot_width(filtered_data(), 0:-20, 220)
+    plotOutput("sankey_down", height = "500px", width = paste0(plot_width, "px"))
   })
 
-  # ---------------------------------------------------------------------------
-  # 9. Render "full" Sankey (mirror logic).
-  # ---------------------------------------------------------------------------
-  output$sankey <- renderPlot({
-    d_use <- current_subset()
-
-    current_vals <- unique(as.character(d_use$current))
-    current_vals <- current_vals[!is.na(current_vals)]
-    validate(
-      need(
-        length(current_vals) == 1 && current_vals != "All",
-        "Choose a value for ‘current’ in the left panel to show the Sankey."
-      ),
-      need(
-        nrow(d_use) > 0,
-        "No matching pathways for this combination of filters."
-      )
-    )
-
-    f <- sankey_inputs()
-    validate(
-      need(
-        nrow(f) > 0,
-        "No matching pathways for this combination of filters."
-      )
-    )
-
-    currentsee::make_sankey(
-      f[,paste(steps)],
-      node_width = 0.2,
-      flow_label_font_size = 4,
-      node_label_font_size = 5
-    )
-  })
-
-  output$sankey_container <- renderUI({
-    f <- sankey_inputs()
-    n_cols <- sum(names(f[, !sapply(f, function(x) all(is.na(x)))]) %in% paste(-20:20))
-    plot_width <- n_cols * 200
-
-    plotOutput(
-      "sankey",
-      height = "500px",
-      width = paste0(plot_width, "px")
-    )
-  })
-
-
-
-  # ---------------------------------------------------------------------------
-  # Calculate and display filtering percentage
-  # ---------------------------------------------------------------------------
-  output$filter_percentage <- renderText({
-    original_rows <- nrow(df_current())  # Denominator: original data
-    filtered_rows <- nrow(current_subset())  # Numerator: filtered data
-
-    if (original_rows == 0) {
-      percentage <- 0
-    } else {
-      percentage <- round((filtered_rows / original_rows) * 100, 1)
-    }
-
-    paste0(percentage, "%")
-  })
-
-  # Optional: Dynamic % coverage
-  output$dynamic_value_box <- renderUI({
-    original_rows <- nrow(df_current())
-    filtered_rows <- nrow(current_subset())
-
-    if (original_rows == 0) {
-      percentage <- 0
-    } else {
-      percentage <- round((filtered_rows / original_rows) * 100, 1)
-    }
-
-    # Custom color for smooth gradient
-    bg_color <- if (percentage >= 80) "#28a745"
-    else if (percentage >= 60) "#6cb04a"
-    else if (percentage >= 40) "#9bc53d"
-    else if (percentage >= 25) "#ffc107"
-    else if (percentage >= 15) "#fd7e14"
-    else "#dc3545"
-
-    # Warning for very low coverage
-    subtitle_text <- if (percentage < 10) {
-      div(
-        style = "font-size: 0.9em; margin-top: 8px; font-weight: bold;",
-        "\u26a0 very low coverage"
-      )
-    } else {
-      NULL
-    }
-
-    # Fully custom value box
-    div(
-      style = paste0(
-        "background: linear-gradient(135deg, ", bg_color, " 0%, ",
-        adjustcolor(bg_color, alpha.f = 0.8), " 100%); ",
-        "border-radius: 12px; padding: 20px; text-align: center; ",
-        "color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); ",
-        "margin-bottom: 20px; transition: all 0.3s ease;"
-      ),
-      # Title row
-      div(
-        style = "display: flex; align-items: center; justify-content: center; margin-bottom: 10px;",
-        bsicons::bs_icon("funnel", size = "1.2em", style = "margin-right: 8px;"),
-        span(" Data Coverage", style = "font-size: 1.2em; font-weight: 500;")
-      ),
-      # Percentage value
-      div(
-        style = "font-size: 2.5em; font-weight: bold; margin-bottom: 5px;",
-        paste0(percentage, "%")
-      ),
-      # Subtitle/warning
-      subtitle_text
-    )
+  output$sankey_up_container <- renderUI({
+    plot_width <- calculate_plot_width(filtered_data(), 0:20, 220)
+    plotOutput("sankey_up", height = "500px", width = paste0(plot_width, "px"))
   })
 }
 
