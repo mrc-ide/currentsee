@@ -147,7 +147,7 @@ make_flows <- function(x, nodes){
       currentsee::flow_labels,
       by = c("label_start"  = "flow_start", "label_end" = "flow_end")
     ) |>
-    dplyr::select(-.data$label_start, -.data$label_end) |>
+    dplyr::select(-"label_start", -"label_end") |>
     # Flow starts and ends
     dplyr::mutate(
       flow_start_x = .data$xmax_start,
@@ -155,12 +155,12 @@ make_flows <- function(x, nodes){
     ) |>
     # ADD NODE CENTER POSITIONS FOR SORTING
     dplyr::left_join(
-      dplyr::select(nodes, .data$node, .data$ycenter),
+      dplyr::select(nodes, "node", "ycenter"),
       by = c("flow_start" = "node")
     ) |>
     dplyr::rename("start_center" = "ycenter") |>
     dplyr::left_join(
-      dplyr::select(nodes, .data$node, .data$ycenter),
+      dplyr::select(nodes, "node", "ycenter"),
       by = c("flow_end" = "node")
     ) |>
     dplyr::rename("end_center" = "ycenter") |>
@@ -181,7 +181,7 @@ make_flows <- function(x, nodes){
       .by = "flow_end"
     ) |>
     # Clean up temporary columns
-    dplyr::select(-.data$start_center, -.data$end_center) |>
+    dplyr::select(-"start_center", -"end_center") |>
     dplyr::mutate(
       flow_start_center =.data$flow_start_ymin + ((.data$flow_start_ymax -.data$flow_start_ymin) / 2),
       flow_end_center =.data$flow_end_ymin + ((.data$flow_end_ymax -.data$flow_end_ymin) / 2)
@@ -219,12 +219,12 @@ create_flow_curves <- function(flows, nodes, gradient_resolution = 2000) {
   # Join flows with node colors for start and end nodes
   flows_with_colors <- flows |>
     dplyr::left_join(
-      dplyr::select(nodes, .data$node, .data$colour),
+      dplyr::select(nodes, "node", "colour"),
       by = c("flow_start" = "node")
     ) |>
     dplyr::rename("color_start" = "colour") |>
     dplyr::left_join(
-      dplyr::select(nodes, .data$node, .data$colour),
+      dplyr::select(nodes, "node", "colour"),
       by = c("flow_end" = "node")
     ) |>
     dplyr::rename("color_end" = "colour")
