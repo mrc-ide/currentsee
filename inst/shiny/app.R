@@ -78,31 +78,33 @@ ui <-
               width = 3
             ),
             mainPanel(
-              bslib::card(
-                height = "620px",
-                bslib::navset_card_pill(
-                  bslib::nav_panel(
-                    "Full pathway",
-                    br(),
-                    br(),
-                    uiOutput("sankey_container"),
-                    h4(""), # spacer to avoid scrollbars
+              # Plot type selector
+              div(
+                style = "margin-bottom: 20px;",
+                radioButtons(
+                  "plot_type",
+                  "Select view:",
+                  choices = list(
+                    "Full pathway" = "full",
+                    "Removing interventions" = "down",
+                    "Adding interventions" = "up"
                   ),
-                  bslib::nav_panel(
-                    "Removing interventions",
-                    br(),
-                    br(),
-                    uiOutput("sankey_down_container"),
-                    h4("") # spacer to avoid scrollbars
-                  ),
-                  bslib::nav_panel(
-                    "Adding interventions",
-                    br(),
-                    br(),
-                    uiOutput("sankey_up_container"),
-                    h4("") # spacer to avoid scrollbars
-                  )
+                  selected = "full",
+                  inline = TRUE
                 )
+              ),
+
+              conditionalPanel(
+                condition = "input.plot_type == 'full'",
+                uiOutput("sankey_container")
+              ),
+              conditionalPanel(
+                condition = "input.plot_type == 'down'",
+                uiOutput("sankey_down_container")
+              ),
+              conditionalPanel(
+                condition = "input.plot_type == 'up'",
+                uiOutput("sankey_up_container")
               )
             )
           )
@@ -395,7 +397,7 @@ server <- function(input, output, session) {
   output$sankey_down_container <- renderUI({
     f <- sankey_inputs()
     n_cols <- sum(names(f[, !sapply(f, function(x) all(is.na(x)))]) %in% paste(0:-20))
-    plot_width <- n_cols * 200
+    plot_width <- n_cols * 220
 
     plotOutput(
       "sankey_down",
