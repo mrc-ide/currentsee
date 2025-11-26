@@ -5,6 +5,7 @@
 #'
 #' @param data A data frame containing the pathway data
 #' @return A character vector of column names to be used as filter variables
+#' @export
 get_filter_vars <- function(data) {
   core_cols <- c("-4", "-3", "-2", "-1", "0", "1", "2", "3", "4")
   c("current", setdiff(names(data), c("current", core_cols)))
@@ -19,6 +20,7 @@ get_filter_vars <- function(data) {
 #' @param filter_vars Character vector of column names to filter on
 #' @param input Shiny input object containing filter selections
 #' @return A filtered data frame
+#' @export
 apply_filters <- function(data, filter_vars, input) {
   filtered_data <- data
 
@@ -39,6 +41,7 @@ apply_filters <- function(data, filter_vars, input) {
 #'
 #' @param data A data frame containing a 'current' column
 #' @return NULL (function validates or throws error via shiny::validate)
+#' @export
 validate_current_selection <- function(data) {
   current_vals <- unique(as.character(data$current))
   current_vals <- current_vals[!is.na(current_vals)]
@@ -63,6 +66,7 @@ validate_current_selection <- function(data) {
 #' @param data A data frame containing pathway data
 #' @param step_columns Character vector of column names representing steps
 #' @return A Sankey plot object from currentsee::make_sankey()
+#' @export
 create_sankey_plot <- function(data, step_columns) {
   validate_current_selection(data)
 
@@ -90,6 +94,7 @@ create_sankey_plot <- function(data, step_columns) {
 #' @param step_range Numeric vector of step values to include (e.g., -20:20)
 #' @param width_per_col Numeric, width in pixels per column (default: 220)
 #' @return Numeric value representing total plot width in pixels
+#' @export
 calculate_plot_width <- function(data, step_range, width_per_col = 220) {
   n_cols <- sum(names(data[, !sapply(data, function(x) all(is.na(x)))]) %in% paste(step_range))
   n_cols * width_per_col
@@ -103,6 +108,7 @@ calculate_plot_width <- function(data, step_range, width_per_col = 220) {
 #' @param original_rows Numeric, total number of rows in original dataset
 #' @param filtered_rows Numeric, number of rows after filtering
 #' @return HTML div element with coverage information and styling
+#' @export
 create_coverage_box <- function(original_rows, filtered_rows) {
   percentage <- if (original_rows == 0) 0 else round((filtered_rows / original_rows) * 100, 1)
 
