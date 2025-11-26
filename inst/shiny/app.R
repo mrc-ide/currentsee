@@ -82,6 +82,13 @@ ui <-
                 height = "620px",
                 bslib::navset_card_pill(
                   bslib::nav_panel(
+                    "Full pathway",
+                    br(),
+                    br(),
+                    uiOutput("sankey_container"),
+                    h4(""), # spacer to avoid scrollbars
+                  ),
+                  bslib::nav_panel(
                     "Removing interventions",
                     br(),
                     br(),
@@ -331,7 +338,7 @@ server <- function(input, output, session) {
 
     make_sankey(
       f[,paste(steps[steps >= 0])],
-      node_width = 0.3,
+      node_width = 0.2,
       flow_label_font_size = 4,
       node_label_font_size = 5
     )
@@ -379,7 +386,7 @@ server <- function(input, output, session) {
 
     currentsee::make_sankey(
       f[,paste(steps[steps <= 0])],
-      node_width = 0.25,
+      node_width = 0.2,
       flow_label_font_size = 4,
       node_label_font_size = 5
     )
@@ -396,6 +403,55 @@ server <- function(input, output, session) {
       width = paste0(plot_width, "px")
     )
   })
+
+  # ---------------------------------------------------------------------------
+  # 9. Render "full" Sankey (mirror logic).
+  # ---------------------------------------------------------------------------
+  output$sankey <- renderPlot({
+    d_use <- current_subset()
+
+    current_vals <- unique(as.character(d_use$current))
+    current_vals <- current_vals[!is.na(current_vals)]
+    validate(
+      need(
+        length(current_vals) == 1 && current_vals != "All",
+        "Choose a value for ‘current’ in the left panel to show the Sankey."
+      ),
+      need(
+        nrow(d_use) > 0,
+        "No matching pathways for this combination of filters."
+      )
+    )
+
+    f <- sankey_inputs()
+    validate(
+      need(
+        nrow(f) > 0,
+        "No matching pathways for this combination of filters."
+      )
+    )
+
+    currentsee::make_sankey(
+      f[,paste(steps)],
+      node_width = 0.2,
+      flow_label_font_size = 4,
+      node_label_font_size = 5
+    )
+  })
+
+  output$sankey_container <- renderUI({
+    f <- sankey_inputs()
+    n_cols <- sum(names(f[, !sapply(f, function(x) all(is.na(x)))]) %in% paste(-20:20))
+    plot_width <- n_cols * 200
+
+    plotOutput(
+      "sankey",
+      height = "500px",
+      width = paste0(plot_width, "px")
+    )
+  })
+
+
 
   # ---------------------------------------------------------------------------
   # Calculate and display filtering percentage

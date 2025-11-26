@@ -37,13 +37,17 @@ make_sankey <- function(
   stopifnot(ncol(x) > 1)
 
   # Make node, flows and curves
-  nodes <- make_nodes(x, node_width = 0.1)
+  nodes <- make_nodes(x, node_width = node_width)
   flows <- make_flows(x, nodes)
   curves <- create_flow_curves(flows, nodes)
 
   if(is.null(x_names)){
     x_names <- make_x_labs(names(x))
   }
+  x_name_colour <- rep("#36454F", length(x_names))
+  x_name_colour[x_names == "Current"] <- "black"
+  x_name_size <- rep(x_label_font_size, length(x_names))
+  x_name_size[x_names == "Current"] <- x_label_font_size * 1.4
 
   p <- ggplot2::ggplot() +
     # Flow curves
@@ -101,7 +105,7 @@ make_sankey <- function(
       axis.title.y = ggplot2::element_blank(),
       axis.text.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
-      axis.text.x = ggplot2::element_text(size = x_label_font_size, color = "black"),
+      axis.text.x = ggplot2::element_text(size = x_name_size, color = x_name_colour),
       legend.position = "none"
     )
 

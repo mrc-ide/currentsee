@@ -189,7 +189,7 @@ make_flows <- function(x, nodes){
     # Labels
     dplyr::mutate(
       hjust = ifelse(.data$direction == "down", 1, 0),
-      label_x = ifelse(.data$direction == "down",.data$flow_end_x,.data$flow_start_x),
+      label_x = ifelse(.data$direction == "down",.data$flow_end_x - 0.08, .data$flow_start_x) + 0.05,
       label_y = ifelse(.data$direction == "down",.data$flow_end_center,.data$flow_start_center)
     )
 
