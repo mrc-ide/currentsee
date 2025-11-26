@@ -18,7 +18,6 @@ Imports:
     rlang,
     bslib,
     bsicons,
-    RColorBrewer,
     ggplot2,
     ggnewscale,
     tidyr

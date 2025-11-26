@@ -43,12 +43,12 @@ validate_current_selection <- function(data) {
   current_vals <- unique(as.character(data$current))
   current_vals <- current_vals[!is.na(current_vals)]
 
-  validate(
-    need(
+  shiny::validate(
+    shiny::need(
       length(current_vals) == 1 && current_vals != "All",
       "Choose a value for 'current' in the left panel to show the Sankey."
     ),
-    need(
+    shiny::need(
       nrow(data) > 0,
       "No matching pathways for this combination of filters."
     )
@@ -66,8 +66,8 @@ validate_current_selection <- function(data) {
 create_sankey_plot <- function(data, step_columns) {
   validate_current_selection(data)
 
-  validate(
-    need(
+  shiny::validate(
+    shiny::need(
       nrow(data) > 0,
       "No matching pathways for this combination of filters."
     )
@@ -107,7 +107,7 @@ create_coverage_box <- function(original_rows, filtered_rows) {
   percentage <- if (original_rows == 0) 0 else round((filtered_rows / original_rows) * 100, 1)
 
   # Dynamic color based on coverage percentage
-  bg_color <- case_when(
+  bg_color <- dplyr::case_when(
     percentage >= 80 ~ "#28a745",
     percentage >= 60 ~ "#6cb04a",
     percentage >= 40 ~ "#9bc53d",
@@ -118,7 +118,7 @@ create_coverage_box <- function(original_rows, filtered_rows) {
 
   # Warning for very low coverage
   subtitle_text <- if (percentage < 10) {
-    div(
+    shiny::div(
       style = "font-size: 0.9em; margin-top: 8px; font-weight: bold;",
       "\u26a0 very few records matched"
     )
@@ -126,20 +126,20 @@ create_coverage_box <- function(original_rows, filtered_rows) {
     NULL
   }
 
-  div(
+  shiny::div(
     style = paste0(
       "background: linear-gradient(135deg, ", bg_color, " 0%, ",
-      adjustcolor(bg_color, alpha.f = 0.8), " 100%); ",
+      grDevices::adjustcolor(bg_color, alpha.f = 0.8), " 100%); ",
       "border-radius: 12px; padding: 20px; text-align: center; ",
       "color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); ",
       "margin-bottom: 20px; transition: all 0.3s ease;"
     ),
-    div(
+    shiny::div(
       style = "display: flex; align-items: center; justify-content: center; margin-bottom: 10px;",
       bsicons::bs_icon("funnel", size = "1.2em", style = "margin-right: 15px;"),
-      span("Records Matched", style = "font-size: 1.2em; font-weight: 500; margin-left: 8px;")
+      shiny::span("Records Matched", style = "font-size: 1.2em; font-weight: 500; margin-left: 8px;")
     ),
-    div(
+    shiny::div(
       style = "font-size: 2.5em; font-weight: bold; margin-bottom: 5px;",
       paste0(percentage, "%")
     ),
