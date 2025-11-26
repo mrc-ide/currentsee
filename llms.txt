@@ -19,32 +19,35 @@ pak::pak("mrc-ide/currentsee")
 
 - [`add_line_breaks_smart()`](https://mrc-ide.github.io/currentsee/reference/add_line_breaks_smart.md)
   : Add smart line breaks to text strings
-- [`calculate_flow_transitions()`](https://mrc-ide.github.io/currentsee/reference/calculate_flow_transitions.md)
-  : Calculate flow transitions between columns
-- [`calculate_node_positions()`](https://mrc-ide.github.io/currentsee/reference/calculate_node_positions.md)
-  : Calculate node positions and dimensions
+- [`apply_filters()`](https://mrc-ide.github.io/currentsee/reference/apply_filters.md)
+  : Apply Filter Selections
+- [`calculate_plot_width()`](https://mrc-ide.github.io/currentsee/reference/calculate_plot_width.md)
+  : Calculate Plot Width
 - [`colours_df`](https://mrc-ide.github.io/currentsee/reference/colours_df.md)
   : Package colour palette
 - [`contact_card()`](https://mrc-ide.github.io/currentsee/reference/contact_card.md)
   : Create a contact card for RShiny applications
+- [`create_coverage_box()`](https://mrc-ide.github.io/currentsee/reference/create_coverage_box.md)
+  : Create Coverage Value Box
 - [`create_flow_curves()`](https://mrc-ide.github.io/currentsee/reference/create_flow_curves.md)
-  : Create detailed flow visualization data with smooth curves
+  : Create detailed flow visualization data with node-based color
+  gradients
+- [`create_sankey_plot()`](https://mrc-ide.github.io/currentsee/reference/create_sankey_plot.md)
+  : Create Sankey Plot
 - [`flow_labels`](https://mrc-ide.github.io/currentsee/reference/flow_labels.md)
   : Package flow labels
+- [`get_filter_vars()`](https://mrc-ide.github.io/currentsee/reference/get_filter_vars.md)
+  : Get Filter Variables
 - [`launch_step_app()`](https://mrc-ide.github.io/currentsee/reference/launch_step_app.md)
   : Launch the interactive step-package Sankey application
+- [`make_flows()`](https://mrc-ide.github.io/currentsee/reference/make_flows.md)
+  : Create flow transitions for bidirectional Sankey diagrams
+- [`make_nodes()`](https://mrc-ide.github.io/currentsee/reference/make_nodes.md)
+  : Calculate node positions and dimensions
 - [`make_sankey()`](https://mrc-ide.github.io/currentsee/reference/make_sankey.md)
-  : Create Sankey diagram
+  : Create bidirectional Sankey diagram
 - [`make_x_labs()`](https://mrc-ide.github.io/currentsee/reference/make_x_labs.md)
   : Create descriptive x-axis labels for intervention scaling
-- [`nodes_down()`](https://mrc-ide.github.io/currentsee/reference/nodes_down.md)
-  : Process data for downward scaling Sankey diagram
-- [`nodes_up()`](https://mrc-ide.github.io/currentsee/reference/nodes_up.md)
-  : Process data for upward scaling Sankey diagram
-- [`prepare_flow_labels()`](https://mrc-ide.github.io/currentsee/reference/prepare_flow_labels.md)
-  : Prepare flow label positions
-- [`prepare_node_labels()`](https://mrc-ide.github.io/currentsee/reference/prepare_node_labels.md)
-  : Prepare node labels
 - [`sankey_sigmoid()`](https://mrc-ide.github.io/currentsee/reference/sankey_sigmoid.md)
   : Sigmoid interpolation function for smooth flow curves
 - [`simulate()`](https://mrc-ide.github.io/currentsee/reference/simulate.md)
@@ -57,6 +60,8 @@ pak::pak("mrc-ide/currentsee")
   : App methods tab
 - [`tab_team()`](https://mrc-ide.github.io/currentsee/reference/tab_team.md)
   : App team tab
+- [`validate_current_selection()`](https://mrc-ide.github.io/currentsee/reference/validate_current_selection.md)
+  : Validate Current Selection
 
 # Articles
 

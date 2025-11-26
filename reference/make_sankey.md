@@ -1,17 +1,16 @@
-# Create Sankey diagram
+# Create bidirectional Sankey diagram
 
-Generates a Sankey diagram with customizable nodes, flows, colours, and
-labels. Supports dead-end flows (NA values), custom labeling, and
-flexible styling options.
+Generates a Sankey diagram that can flow both left (down/removing) and
+right (up/adding) from a central current state, with
+direction-appropriate flow labels and alignment.
 
 ## Usage
 
 ``` r
 make_sankey(
   x,
-  direction,
-  flow_labels = currentsee::flow_labels,
-  colours = currentsee::colours_df,
+  flow_labels = NULL,
+  colours = NULL,
   node_width = 0.05,
   node_label_font_size = 3,
   flow_label_font_size = 2.5,
@@ -28,11 +27,6 @@ make_sankey(
 
   Data frame where each column represents a step and each row represents
   a flow path
-
-- direction:
-
-  String "up" or "down" to determine prioritisation or deprioritisation
-  flow
 
 - flow_labels:
 

@@ -1,21 +1,23 @@
-# Create detailed flow visualization data with smooth curves
+# Create detailed flow visualization data with node-based color gradients
 
-Generates the detailed geometric data needed to render smooth gradient
-flows between nodes, including color interpolation and curve
-coordinates.
+Generates smooth gradient flows between nodes using the actual node
+colors from the nodes data frame for realistic color transitions.
 
 ## Usage
 
 ``` r
-create_flow_curves(df_f_positioned, gradient_resolution = 2000)
+create_flow_curves(flows, nodes, gradient_resolution = 2000)
 ```
 
 ## Arguments
 
-- df_f_positioned:
+- flows:
 
-  Data frame with positioned flow data including color and coordinate
-  information
+  Data frame with flow data including flow_start and flow_end node names
+
+- nodes:
+
+  Data frame with node information including 'node' and 'colour' columns
 
 - gradient_resolution:
 
@@ -23,5 +25,4 @@ create_flow_curves(df_f_positioned, gradient_resolution = 2000)
 
 ## Value
 
-Data frame with detailed flow rendering data including color, xmin,
-xmax, ymin, ymax
+Data frame with detailed flow rendering data including color gradients
