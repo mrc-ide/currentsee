@@ -165,7 +165,7 @@ make_flows <- function(x, nodes){
     ) |>
     dplyr::rename("end_center" = "ycenter") |>
     # Sort for start position
-    dplyr::arrange(.data$flow_start, .data$end_center) |>  # Sort by start node, then by end node position
+    dplyr::arrange(.data$flow_start, .data$end_center) |>
     # Calculate start positions
     dplyr::mutate(
       flow_start_ymin =.data$ymin_start + c(0, utils::head(cumsum(.data$n), -1)),
