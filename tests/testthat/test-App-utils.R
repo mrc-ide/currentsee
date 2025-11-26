@@ -14,11 +14,6 @@ setup_test_data <- function() {
   )
 }
 
-# Mock input object for testing
-mock_input <- function(selections = list()) {
-  structure(selections, class = "reactivevalues")
-}
-
 # Tests for get_filter_vars() ------------------------------------------------
 
 test_that("get_filter_vars returns correct filter variables", {
